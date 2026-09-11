@@ -1,0 +1,16 @@
+# Build output
+build/
+*.rbxl
+*.rbxlx
+
+# Rojo
+.rojo/
+*.rbxmx
+
+# Tooling caches
+.selene/
+.luau-analyze/
+
+# OS/editor
+.DS_Store
+*.swp

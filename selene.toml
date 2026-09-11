@@ -1,0 +1,5 @@
+std = "roblox"
+
+# Phase 1 is intentionally light on annotations; keep lints at defaults and
+# let luau-analyze (strict) be the type gate. Adjust as the codebase annotates.
+[lints]

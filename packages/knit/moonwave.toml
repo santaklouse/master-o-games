@@ -1,0 +1,14 @@
+gitRepoUrl = "https://github.com/Sleitnick/Knit"
+
+classOrder = [
+	"KnitServer",
+	"KnitClient"
+]
+
+[home]
+enabled = true
+includeReadme = false
+
+[docusaurus]
+tagline = "Lightweight game framework for Roblox"
+favicon = "/favicon.png"
