@@ -111,10 +111,23 @@ local STDLIB = {
 }
 
 -- --------------------------------------------------------------- instances
+-- `InstanceMT` holds the methods; the per-instance metatable adds Roblox's
+-- dot-child lookup (`script.Services`, `script.Parent.Parent.Logic.Foo`)
+-- on top of them, which is how services reach their siblings and modules.
 local InstanceMT = {}
 
+local InstanceMeta = {
+    __index = function(self, key)
+        local child = self._children[key]
+        if child ~= nil then
+            return child
+        end
+        return InstanceMT[key]
+    end,
+}
+
 local function newInstance(className, name)
-    return setmetatable({ ClassName = className, Name = name, _children = {}, _order = {} }, { __index = InstanceMT })
+    return setmetatable({ ClassName = className, Name = name, _children = {}, _order = {} }, InstanceMeta)
 end
 
 function InstanceMT:IsA(className)
@@ -158,6 +171,11 @@ function InstanceMT:GetService(name)
 end
 
 local function addChild(parent, child)
+    -- Roblox instances always have a Name before they are parented; the stub
+    -- must too, otherwise `_children[nil] = child` fails with "table index is
+    -- nil" far from the real mistake. Name non-instance stubs (Players,
+    -- RunService) at construction, not after parenting.
+    assert(type(child.Name) == "string", "harness stub added to " .. tostring(parent.Name) .. " has no Name")
     parent._children[child.Name] = child
     table.insert(parent._order, child)
     child.Parent = parent
@@ -178,16 +196,28 @@ end
 -- source file executed with a Roblox-ish environment (cached per boot).
 local cache = {}
 
+-- Lune's `@lune/fs` has no `exists` (isFile/isDir only) — probe by reading,
+-- so the friendly "run me from the repo root" message survives on any Lune.
 local function readSource(path)
-    if not fs.exists(path) then
+    local ok, contents = pcall(fs.readFile, path)
+    if not ok then
         error("harness must run from the repo root: missing " .. path .. " (use: lune run tests/round_loop.lua)")
     end
-    return fs.readFile(path)
+    return contents
 end
 
 H.readSource = readSource
 
 local stubRequire
+
+-- Roblox globals the server tree expects in _G: `task` (Logic modules capture
+-- `local task = _G.task`) and `_G` itself. `env._G = env` makes _G.task
+-- resolve to the stub while every other global falls through to STDLIB.
+local function newEnv(fields)
+    local env = setmetatable(fields, { __index = STDLIB })
+    env._G = env
+    return env
+end
 
 local function loadNode(node)
     if node._value ~= nil then
@@ -201,7 +231,7 @@ local function loadNode(node)
     end
     local chunk = luau.load(readSource(node._path), {
         debugName = node._path,
-        environment = setmetatable({
+        environment = newEnv({
             game = H.tree.root,
             Players = H.players,
             RunService = H.runService,
@@ -211,7 +241,7 @@ local function loadNode(node)
             Instance = { new = newInstance },
             os = H.osShape,
             Enum = {},
-        }, { __index = STDLIB }),
+        }),
         injectGlobals = false,
     })
     local value = chunk()
@@ -360,7 +390,13 @@ end
 
 -- ------------------------------------------------------------- fake Players
 local function newPlayers()
-    local players = { _list = {}, PlayerAdded = SyncSignal.new(), PlayerRemoving = SyncSignal.new() }
+    local players = {
+        ClassName = "Players",
+        Name = "Players",
+        _list = {},
+        PlayerAdded = SyncSignal.new(),
+        PlayerRemoving = SyncSignal.new(),
+    }
 
     function players:GetPlayers()
         return table.clone(self._list)
@@ -429,9 +465,7 @@ local function buildTree()
     end
 
     addChild(root, H.players)
-    H.players.Name = "Players"
     addChild(root, H.runService)
-    H.runService.Name = "RunService"
 
     return {
         root = root,
@@ -469,6 +503,8 @@ function H.boot()
     H.players = newPlayers()
     H.knit = newKnit()
     H.runService = {
+        ClassName = "RunService",
+        Name = "RunService",
         Heartbeat = SyncSignal.new(),
         IsServer = function()
             return true
@@ -491,14 +527,14 @@ function H.boot()
 
     local chunk = luau.load(readSource(H.tree.serverScript._path), {
         debugName = H.tree.serverScript._path,
-        environment = setmetatable({
+        environment = newEnv({
             game = H.tree.root,
             require = stubRequire,
             script = H.tree.serverScript,
             task = taskStub,
             os = H.osShape,
             Instance = { new = newInstance },
-        }, { __index = STDLIB }),
+        }),
         injectGlobals = false,
     })
 
