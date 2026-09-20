@@ -149,6 +149,18 @@ test("no src file treats Roblox's `os` library as a clock object", function()
     end
 end)
 
+test("the FSM's clock fallback is a { now } function, not the `os` library", function()
+    -- B1 root cause: the FSM did `self.clock = config.clock or os` and
+    -- MatchService passed `clock = os`. Roblox's `os` has no `now`, so
+    -- MatchStateMachine.new crashed on `self.clock.now()` and took the whole
+    -- server boot with it. The default must therefore be a { now } table.
+    local sm = H.Logic.MatchStateMachine.new({ Constants = Constants, Enums = Enums })
+    eq(type(sm.clock), "table", "fallback clock is a table, not `os`")
+    eq(type(sm.clock.now), "function", "fallback clock exposes now()")
+    eq(type(sm.clock.now()), "number", "now() returns a number")
+    eq(sm.phase, Enums.Phase.Lobby, "FSM constructs without a clock config")
+end)
+
 test("init.server.lua boots: Knit.AddServices(script.Services) + Knit.Start()", function()
     local ok, err = H.boot()
     check(ok, "server tree failed to boot: " .. tostring(err))
