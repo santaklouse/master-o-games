@@ -315,8 +315,12 @@ test("first to 8 wins ends the match and returns the FSM to the lobby", function
     local match = H.service("Match")
     local economy = H.service("Economy")
     local matchEnd = nil
+    local roundEnd = nil
     H.service("Match").Client.MatchEnded:Connect(function(payload)
         matchEnd = payload
+    end)
+    H.service("Match").Client.RoundEnded:Connect(function(payload)
+        roundEnd = payload
     end)
 
     for _ = 1, Constants.WinScore do
@@ -324,11 +328,25 @@ test("first to 8 wins ends the match and returns the FSM to the lobby", function
     end
 
     check(matchEnd ~= nil, "MatchEnded event payload")
+    eq(matchEnd.winnerTeam, "Raiders", "winner team")
     eq(matchEnd.raiders, 8, "raider score")
     eq(matchEnd.wardens, 0, "warden score")
-    eq(matchEnd.isMatchWin, true, "isMatchWin")
     eq(matchEnd.roundsPlayed, 8, "rounds played")
     eq(#matchEnd.roundHistory, 8, "match end payload carries the round history")
+    eq(matchEnd.roundHistory[8].raiders, 8, "the last history entry carries the final score")
+    -- The payload is the UI contract in gdd/alpha-ui-spec.md §payloads:
+    -- MatchEnded = {winnerTeam, raiders, wardens, roundsPlayed, roundHistory}
+    -- and `isMatchWin` belongs to RoundEnded, which fires in the SAME frame
+    -- (GDD §art 8: round-end FX must read it there and stand down). Asserting
+    -- it on MatchEnded was the harness being wrong, not the machine.
+    check(roundEnd ~= nil, "RoundEnded payload")
+    eq(roundEnd.isMatchWin, true, "RoundEnded.isMatchWin on the deciding round")
+    eq(roundEnd.winnerTeam, "Raiders", "RoundEnded.winnerTeam")
+    eq(roundEnd.round, 8, "RoundEnded.round")
+    -- The payload must not hand the end screen authoritative history entries.
+    matchEnd.roundHistory[1].winner = "HACKED"
+    eq(H.snapshot().roundHistory[1].winner, "Raiders", "MatchEnded history is a deep copy")
+
     eq(match:GetPhase(), Enums.Phase.Lobby, "back to the lobby for rematch voting")
     eq(H.count(economy.Client.Credits:Get()), 0, "credits reset at match end (§5.3)")
     eq(H.service("PlayerState"):GetHealth(101), nil, "health registry reset at match end")
@@ -393,13 +411,32 @@ test("GetStateSnapshot reports the live roster, alive counts and vote requiremen
     local ctx = freshAction()
     killAll({ 106, 107 })
     local snapshot = H.snapshot()
-    deadEqOrNil(snapshot, ctx)
-end)
 
--- helper kept separate so the failure message names the exact field
-function deadEqOrNil(snapshot, ctx)
-    eq(H.count(snapshot.teams.Raiders + 0 or {}), 0, "unused")
-end
+    -- Roster: every connected player stays listed on their team whether or
+    -- not they are still alive — that is exactly why aliveCounts exists as a
+    -- separate field (eliminated players are rostered until they leave).
+    eq(H.count(snapshot.teams.Raiders), 5, "raider roster")
+    eq(H.count(snapshot.teams.Wardens), 5, "warden roster")
+    deepEq(H.sortedIds(snapshot.teams.Wardens), ctx.wardens, "warden roster ids")
+    eq(snapshot.spectators, 0, "spectators")
+
+    -- The live counts, which are what the round resolves on and what the HUD
+    -- renders ("4 v 3").
+    eq(snapshot.aliveCounts.Raiders, 5, "no raider has died")
+    eq(snapshot.aliveCounts.Wardens, 3, "two wardens are down")
+
+    -- Phase / round / rematch fields for the HUD and the end screen.
+    eq(snapshot.phase, Enums.Phase.Action, "phase")
+    eq(snapshot.round, 1, "round")
+    eq(snapshot.rematchVotes, 0, "no votes during a live match")
+    eq(snapshot.rematchVotesRequired, 10, "the vote requirement counts the present players")
+
+    -- A snapshot is a value copy: a reader cannot move the authoritative count.
+    snapshot.aliveCounts.Raiders = 0
+    snapshot.teams.Wardens[1] = 999
+    eq(H.snapshot().aliveCounts.Raiders, 5, "alive counts are copied")
+    eq(H.snapshot().teams.Wardens[1], 106, "roster is copied")
+end)
 
 test("snapshot is a value copy: a reader cannot corrupt authoritative state", function()
     local ctx = freshAction()
@@ -669,6 +706,35 @@ test("a leave during the buy phase is reflected when the round starts", function
     eq(H.snapshot().phase, Enums.Phase.Action, "round starts 4v5 (a team may play short §4)")
     eq(H.snapshot().aliveCounts.Raiders, 4, "alive count matches the roster")
     eq(H.snapshot().aliveCounts.Wardens, 5, "alive count matches the roster")
+end)
+
+test("a team emptied during the buy phase does not inherit its last alive count", function()
+    local ctx = freshAction()
+    -- Play round 1 out so aliveCounts holds a real, non-zero raider count.
+    killAll(ctx.wardens)
+    H.advance(Constants.RoundEndPause)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "round 2 buy phase")
+    eq(H.snapshot().aliveCounts.Raiders, 5, "the raiders who won round 1 are all alive")
+
+    -- Every raider leaves before the round goes live.
+    for index = 1, 5 do
+        H.players:Remove(ctx.players[index])
+    end
+    H.flush()
+    H.advance(Constants.BuyPhaseDuration)
+
+    local snapshot = H.snapshot()
+    eq(snapshot.phase, Enums.Phase.Action, "round 2 is live")
+    eq(H.count(snapshot.teams.Raiders), 0, "no raiders are rostered")
+    -- Regression: the count used to be left at 5 (the previous round's value,
+    -- assigned only for teams that still had a roster entry), so the round
+    -- could never resolve — no living raider existed to eliminate.
+    eq(snapshot.aliveCounts.Raiders, 0, "an empty team has no living players")
+    eq(snapshot.aliveCounts.Wardens, 5, "the wardens who stayed are alive")
+
+    H.advance(Constants.RoundDuration)
+    eq(H.snapshot().phase, Enums.Phase.RoundEnd, "the empty-team round still resolves")
+    eq(lastHistory(H.snapshot().roundHistory).reason, Enums.RoundEndReason.TimeExpiredNotPlanted, "on the round timer")
 end)
 
 -- ==========================================================================
