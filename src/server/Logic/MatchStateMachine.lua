@@ -408,6 +408,11 @@ function MatchStateMachine:_StartActionPhase()
     -- Fresh alive counts for the round (§7.3 no respawns) and a fresh
     -- elimination ledger to match them.
     self.eliminated = {}
+    -- Zero BOTH counts before counting: a team with nobody left when the
+    -- round starts (everyone left in the buy phase) must not inherit the
+    -- previous round's count — a stale positive count is a live round nobody
+    -- can end, and the HUD would show ghosts (B4).
+    self.aliveCounts = { Raiders = 0, Wardens = 0 }
     for _, entry in self.roster do
         if entry.team ~= nil then
             self.aliveCounts[entry.team] = self:GetTeamSize(entry.team)
@@ -547,12 +552,18 @@ function MatchStateMachine:_ResolveRound(winnerTeam, reason)
         wardens = self.scores.Wardens,
     })
     if isMatchWin then
+        -- Payload contract: gdd/alpha-ui-spec.md lists the MatchEnded fields
+        -- as {winnerTeam, raiders, wardens, roundsPlayed, roundHistory} and
+        -- puts `isMatchWin` on RoundEnded (fired just above, same frame), so
+        -- it is deliberately NOT duplicated here.
+        -- History is DEEP-copied (GetRoundHistory): the end screen receives
+        -- this payload and must not be handed authoritative entries (B2).
         self:_fire(self.Enums.Event.MatchEnded, {
             winnerTeam = winnerTeam,
             raiders = self.scores.Raiders,
             wardens = self.scores.Wardens,
             roundsPlayed = #self.roundHistory,
-            roundHistory = table.clone(self.roundHistory),
+            roundHistory = self:GetRoundHistory(),
         })
         -- Match over: back to lobby for rematch vote / re-fill (§4).
         self.phase = self.Enums.Phase.Lobby
