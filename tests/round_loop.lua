@@ -100,9 +100,20 @@ end
 
 -- End the current round by eliminating a whole team, then roll the FSM into
 -- the next buy phase (RoundEndPause) so the following round can be played.
+-- Advancing the buy phase first is what makes this repeatable: an elimination
+-- only counts while the round is live (ACTION), and the FSM sits in BUY_PHASE
+-- between rounds.
 local function finishRoundAndAdvance(losers)
+    H.advance(Constants.BuyPhaseDuration)
     killAll(losers)
     H.advance(Constants.RoundEndPause)
+end
+
+-- Play `count` full rounds, always ending them by eliminating `losers`.
+local function playRounds(losers, count)
+    for _ = 1, count do
+        finishRoundAndAdvance(losers)
+    end
 end
 
 -- ==========================================================================
@@ -110,10 +121,32 @@ section("B1 — server boot (src/server/init.server.lua)")
 -- ==========================================================================
 
 test("the Roblox-shaped `os` library has no `now` (root cause of B1)", function()
+    H.boot()
     -- Roblox's os exposes clock/date/difftime/time only. MatchService used to
     -- inject `clock = os` into MatchStateMachine, which calls clock.now().
     eq(type(H.osShape.clock), "function", "os.clock")
     eq(H.osShape.now, nil, "os.now must not exist")
+    eq(H.osShape.time, os.time, "os.time")
+    eq(H.osShape.date, os.date, "os.date")
+    eq(H.osShape.difftime, os.difftime, "os.difftime")
+end)
+
+test("no src file treats Roblox's `os` library as a clock object", function()
+    -- Regression guard for B1: whatever the harness does, nothing in src/
+    -- may pass `os` where a { now = fn } clock is expected, or call os.now.
+    local sources = {
+        "src/server/init.server.lua",
+        "src/server/Logic/MatchStateMachine.lua",
+        "src/server/Services/MatchService.lua",
+        "src/server/Services/CombatService.lua",
+        "src/server/Services/EconomyService.lua",
+        "src/server/Services/PlayerStateService.lua",
+    }
+    for _, path in sources do
+        local src = H.readSource(path)
+        check(src:find("os%.now") == nil, path .. " calls os.now (Roblox's os has no `now`)")
+        check(src:find("clock%s*=%s*os%f[%W]") == nil, path .. " passes `clock = os` (no `now` on Roblox's os)")
+    end
 end)
 
 test("init.server.lua boots: Knit.AddServices(script.Services) + Knit.Start()", function()
@@ -232,6 +265,8 @@ test("buy -> action -> settlement loop: purchases, rental reset, credit persiste
     eq(damage.lethal, false, "40 damage is not lethal at 100 HP")
     eq(damage.state.hp, 60, "hp after 40 damage")
 
+    H.advance(Constants.BuyPhaseDuration) -- shopping is over: round 2 goes live
+    eq(H.snapshot().phase, Enums.Phase.Action, "round 2 in action")
     killAll(ctx.wardens)
     H.advance(Constants.RoundEndPause)
     local balance = economy:GetBalance(101)
@@ -273,8 +308,7 @@ test("first to 8 wins ends the match and returns the FSM to the lobby", function
     end)
 
     for _ = 1, Constants.WinScore do
-        killAll(ctx.wardens)
-        H.advance(Constants.RoundEndPause)
+        finishRoundAndAdvance(ctx.wardens)
     end
 
     check(matchEnd ~= nil, "MatchEnded event payload")
@@ -295,10 +329,7 @@ end)
 
 test("rematch vote restarts the match with cleared scores and history", function()
     local ctx = freshAction()
-    for _ = 1, Constants.WinScore do
-        killAll(ctx.wardens)
-        H.advance(Constants.RoundEndPause)
-    end
+    playRounds(ctx.wardens, Constants.WinScore)
     local match = H.service("Match")
     for _, player in ctx.players do
         match.Client:RequestRematchVote(player)
@@ -330,9 +361,7 @@ end)
 
 test("round history entries are complete and consistent with the score", function()
     local ctx = freshAction()
-    for _ = 1, 3 do
-        finishRoundAndAdvance(ctx.wardens)
-    end
+    playRounds(ctx.wardens, 3)
     local snapshot = H.snapshot()
     eq(#snapshot.roundHistory, 3, "three rounds recorded")
     eq(snapshot.scores.Raiders, 3, "score matches the history")
