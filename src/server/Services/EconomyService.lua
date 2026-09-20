@@ -57,7 +57,9 @@ function EconomyService.Client:RequestPurchase(player, request)
 	end
 	if result.ok then
 		Knit.GetService("PlayerState"):SetArmor(player.UserId, ledger:GetArmor(player.UserId))
-		self:_PublishCredits()
+		-- Knit calls Client methods with self = the Client table, so the
+		-- service (and its private helpers) is reached through self.Server.
+		self.Server:_PublishCredits()
 	end
 	return result
 end

@@ -48,7 +48,10 @@ local MatchService = Knit.CreateService({
 local sm = MatchStateMachine.new({
 	Constants = Shared.Constants,
 	Enums = Shared.Enums,
-	clock = os,
+	-- Roblox's `os` is not a clock object (no `now`); hand the FSM the
+	-- function it actually calls. os.clock() is the server's monotonic
+	-- second counter and is what every timer below uses.
+	clock = { now = os.clock },
 })
 
 -- AFK kick bookkeeping (GDD §4: 60 s idle in buy phase / lobby -> spectator)

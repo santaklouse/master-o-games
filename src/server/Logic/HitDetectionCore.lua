@@ -29,6 +29,12 @@
 local HitDetectionCore = {}
 HitDetectionCore.__index = HitDetectionCore
 
+-- Upper bound on how fast samples can arrive: CombatService records on
+-- Heartbeat, and a high-refresh client can drive that to ~240 Hz. The
+-- memory guard below is sized from this, never from the slower nominal
+-- SampleInterval, so it can never evict a still-live sample.
+local MAX_SAMPLE_HZ = 240
+
 -- config = { WindowSeconds, SampleInterval, Enums }
 function HitDetectionCore.new(config)
 	assert(
@@ -65,27 +71,24 @@ function HitDetectionCore:Record(playerId, t, x, y, z, yaw)
 		self.history[playerId] = h
 	end
 	table.insert(h, { t = t, x = x, y = y, z = z, yaw = yaw or 0 })
-	-- Prune anything older than the window (keeps history tiny at 10 Hz).
+
+	-- Prune by TIME — that is the GDD's actual window. Remove from the FRONT
+	-- with table.remove so the buffer stays hole-free: writing `h[i] = nil`
+	-- leaves nils inside the array, `#h` then stops describing the sequence,
+	-- and the next Record indexes straight into a hole. That single mistake
+	-- took out the whole rewind window (B3).
 	local cutoff = t - self.WindowSeconds
-	local firstLive = 1
-	for i = 1, #h do
-		if h[i].t >= cutoff then
-			firstLive = i
-			break
-		end
+	while #h > 0 and h[1].t < cutoff do
+		table.remove(h, 1)
 	end
-	if firstLive > 1 then
-		for i = 1, firstLive - 1 do
-			h[i] = nil
-		end
-	end
-	-- Keep the buffer sorted & bounded: cap at ceil(window / interval) + 2
-	local cap = math.ceil(self.WindowSeconds / self.SampleInterval) + 2
-	if #h > cap then
-		local remove = #h - cap
-		for i = 1, remove do
-			h[i] = nil
-		end
+
+	-- Memory guard only (the time cutoff above is the real bound), sized for
+	-- the fastest rate we record at. A SampleInterval-sized cap (0.1 s at
+	-- 10 Hz) would keep ~66 ms of a 200 ms window at 60 Hz and silently
+	-- shorten every rewind.
+	local cap = math.ceil(self.WindowSeconds * MAX_SAMPLE_HZ) + 2
+	while #h > cap do
+		table.remove(h, 1)
 	end
 end
 

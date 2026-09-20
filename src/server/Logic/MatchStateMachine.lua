@@ -46,7 +46,11 @@ function MatchStateMachine.new(config)
 	local self = setmetatable({}, MatchStateMachine)
 	self.Constants = config.Constants
 	self.Enums = config.Enums
-	self.clock = config.clock or os
+	-- `clock` is an injected { now = fn } time source. It is NEVER the `os`
+	-- library itself: Roblox's os exposes clock/date/difftime/time and has no
+	-- `now`, so passing `os` (or falling back to it) crashed the FSM at
+	-- construction and took the whole server boot with it (B1).
+	self.clock = config.clock or { now = os.clock }
 
 	self.phase = self.Enums.Phase.Lobby
 	self.round = 0
@@ -54,8 +58,13 @@ function MatchStateMachine.new(config)
 
 	self.scores = { Raiders = 0, Wardens = 0 }
 	self.roster = {} -- playerId -> { role = Enums.Role.*, team = "Raiders"|"Wardens"|nil }
+	-- INVARIANT: aliveCounts[team] == (roster members on team) - (team members
+	-- who died, left or were demoted this round). Every path that changes one
+	-- side must change the other: elimination, leave, mid-round substitution,
+	-- AFK demotion. A desync here is unrecoverable mid-round (B4).
 	self.aliveCounts = { Raiders = 0, Wardens = 0 }
-	self.roundHistory = {} -- { { round, winner, reason } }
+	self.eliminated = {} -- playerId -> true for this round (dead / gone)
+	self.roundHistory = {} -- { { round, winner, reason, raiders, wardens } }
 	self.timeoutResolver = nil
 	self.rematchVotes = {} -- playerId -> true
 	self.requireRematchVotes = true -- after a match ends, LOBBY auto-start waits for votes
@@ -115,7 +124,13 @@ function MatchStateMachine:GetScores()
 end
 
 function MatchStateMachine:GetRoundHistory()
-	return table.clone(self.roundHistory)
+	-- Deep copy: a caller (or a serialized snapshot on its way to a client)
+	-- must not be able to mutate the authoritative history entries.
+	local out = {}
+	for index, entry in self.roundHistory do
+		out[index] = table.clone(entry)
+	end
+	return out
 end
 
 function MatchStateMachine:GetPlayerRole(playerId)
@@ -135,6 +150,9 @@ function MatchStateMachine:GetTeamRoster(team)
 			table.insert(out, id)
 		end
 	end
+	-- Sorted: snapshots are payloads (HUD/end screen), so a roster that
+	-- reorders itself between two identical reads is a bug for consumers.
+	table.sort(out)
 	return out
 end
 
@@ -192,13 +210,19 @@ function MatchStateMachine:GetStateSnapshot()
 		phase = self.phase,
 		round = self.round,
 		scores = table.clone(self.scores),
-		roundHistory = table.clone(self.roundHistory),
+		-- Deep-copied (see GetRoundHistory): a client must never be able to
+		-- reach authoritative history through the snapshot it was sent.
+		roundHistory = self:GetRoundHistory(),
 		teams = {
 			Raiders = self:GetTeamRoster(self.Constants.Teams.Raiders),
 			Wardens = self:GetTeamRoster(self.Constants.Teams.Wardens),
 		},
+		-- Live counts for the round (HUD "4 v 3"); they are aliveCounts, not
+		-- roster sizes: eliminated players stay rostered until they leave.
+		aliveCounts = table.clone(self.aliveCounts),
 		spectators = self:GetSpectatorCount(),
 		rematchVotes = self:GetRematchVoteCount(),
+		rematchVotesRequired = self:GetRematchVoteRequired(),
 	}
 end
 
@@ -229,6 +253,13 @@ function MatchStateMachine:JoinPlayer(playerId)
 	local role, team = self:_AssignSlot()
 
 	self.roster[playerId] = { role = role, team = team }
+	-- Mid-round substitution (§4: a team may play short until someone fills
+	-- the slot): the seat is a LIVE one, so aliveCounts has to grow with the
+	-- roster or the round resolves on a stale count. A player who already
+	-- died this round keeps their seat's death (no respawns, §7.3).
+	if self.phase == self.Enums.Phase.Action and team ~= nil and not self.eliminated[playerId] then
+		self.aliveCounts[team] = (self.aliveCounts[team] or 0) + 1
+	end
 	self:_fire(self.Enums.Event.PlayerJoined, { playerId = playerId, role = role, team = team })
 
 	if self.phase == self.Enums.Phase.Lobby then
@@ -244,16 +275,24 @@ function MatchStateMachine:LeavePlayer(playerId)
 	end
 	self.roster[playerId] = nil
 	self.rematchVotes[playerId] = nil
+
+	-- Rosters keep eliminated players, so roster size alone cannot tell us
+	-- whether a team is out. A player who leaves while alive has to be
+	-- uncounted, otherwise the last living player can disconnect mid-round
+	-- and the round never resolves (B4).
+	local wasAlive = self.phase == self.Enums.Phase.Action and entry.team ~= nil and not self.eliminated[playerId]
+	if wasAlive then
+		self.eliminated[playerId] = true
+		self.aliveCounts[entry.team] = math.max(0, self.aliveCounts[entry.team] - 1)
+	end
+
 	self:_fire(self.Enums.Event.PlayerLeft, { playerId = playerId, role = entry.role, team = entry.team })
 
-	-- A team reduced to zero mid-match cannot continue; other team wins.
-	if self:IsActionPhase() and entry.team ~= nil then
-		local alive = self.aliveCounts[entry.team]
-		local roster = self:GetTeamSize(entry.team)
-		if alive <= 0 or roster <= 0 then
-			local winner = self:_OtherTeam(entry.team)
-			self:_ResolveRound(winner, self.Enums.RoundEndReason.TeamEliminated)
-		end
+	-- A team reduced to zero living players mid-match cannot continue;
+	-- the other team wins the round.
+	if wasAlive and self:IsActionPhase() and self.aliveCounts[entry.team] <= 0 then
+		local winner = self:_OtherTeam(entry.team)
+		self:_ResolveRound(winner, self.Enums.RoundEndReason.TeamEliminated)
 	end
 end
 
@@ -266,8 +305,15 @@ function MatchStateMachine:DemoteToSpectator(playerId)
 	local wasTeam = entry.team
 	entry.role = self.Enums.Role.Spectator
 	entry.team = nil
+	-- Same invariant as LeavePlayer: taking a live player off a team takes
+	-- them out of that team's alive count.
+	local wasAlive = wasTeam ~= nil and self:IsActionPhase() and not self.eliminated[playerId]
+	if wasAlive then
+		self.eliminated[playerId] = true
+		self.aliveCounts[wasTeam] = math.max(0, self.aliveCounts[wasTeam] - 1)
+	end
 	self:_fire(self.Enums.Event.PlayerDemotedToSpectator, { playerId = playerId, previousTeam = wasTeam })
-	if wasTeam ~= nil and self:GetTeamSize(wasTeam) == 0 and self:IsActionPhase() then
+	if wasAlive and self:IsActionPhase() and self.aliveCounts[wasTeam] <= 0 then
 		self:_ResolveRound(self:_OtherTeam(wasTeam), self.Enums.RoundEndReason.TeamEliminated)
 	end
 	return true
@@ -359,7 +405,14 @@ end
 function MatchStateMachine:_StartActionPhase()
 	self.phase = self.Enums.Phase.Action
 	self.phaseStartedAt = self.clock.now()
-	-- Fresh alive counts for the round (§7.3 no respawns)
+	-- Fresh alive counts for the round (§7.3 no respawns) and a fresh
+	-- elimination ledger to match them.
+	self.eliminated = {}
+	-- Zero BOTH counts before counting: a team with nobody left when the
+	-- round starts (everyone left in the buy phase) must not inherit the
+	-- previous round's count — a stale positive count is a live round nobody
+	-- can end, and the HUD would show ghosts (B4).
+	self.aliveCounts = { Raiders = 0, Wardens = 0 }
 	for _, entry in self.roster do
 		if entry.team ~= nil then
 			self.aliveCounts[entry.team] = self:GetTeamSize(entry.team)
@@ -380,7 +433,8 @@ end
 -- these — they DO NOT touch scores or health themselves).
 
 -- Called when a player's health hits 0 (CombatService). Double-elimination
--- reports are ignored (idempotent via aliveCounts).
+-- reports for the same player are ignored (one player dies at most once per
+-- round); the round only resolves when a team's count actually reaches 0.
 function MatchStateMachine:ReportPlayerEliminated(playerId)
 	if self.phase ~= self.Enums.Phase.Action then
 		return false
@@ -389,10 +443,11 @@ function MatchStateMachine:ReportPlayerEliminated(playerId)
 	if team == nil then
 		return false
 	end
-	if (self.aliveCounts[team] or 0) <= 0 then
-		return false -- already resolved this round
+	if self.eliminated[playerId] then
+		return false -- duplicate report (retry, double lethal frame, forged)
 	end
-	self.aliveCounts[team] -= 1
+	self.eliminated[playerId] = true
+	self.aliveCounts[team] = math.max(0, self.aliveCounts[team] - 1)
 	local opponent = self:_OtherTeam(team)
 	self:_fire(self.Enums.Event.PlayerEliminated, {
 		playerId = playerId,
@@ -472,7 +527,15 @@ function MatchStateMachine:_ResolveRound(winnerTeam, reason)
 		return false
 	end
 	self.scores[winnerTeam] += 1
-	table.insert(self.roundHistory, { round = self.round, winner = winnerTeam, reason = reason })
+	-- The history entry carries the score AS OF the end of that round: it is
+	-- what the end-of-match screen and any score audit read back (B2).
+	table.insert(self.roundHistory, {
+		round = self.round,
+		winner = winnerTeam,
+		reason = reason,
+		raiders = self.scores.Raiders,
+		wardens = self.scores.Wardens,
+	})
 	local isMatchWin = self.scores[winnerTeam] >= self.Constants.WinScore
 	self.phase = self.Enums.Phase.RoundEnd
 	self.phaseStartedAt = self.clock.now()
@@ -489,12 +552,18 @@ function MatchStateMachine:_ResolveRound(winnerTeam, reason)
 		wardens = self.scores.Wardens,
 	})
 	if isMatchWin then
+		-- Payload contract: gdd/alpha-ui-spec.md lists the MatchEnded fields
+		-- as {winnerTeam, raiders, wardens, roundsPlayed, roundHistory} and
+		-- puts `isMatchWin` on RoundEnded (fired just above, same frame), so
+		-- it is deliberately NOT duplicated here.
+		-- History is DEEP-copied (GetRoundHistory): the end screen receives
+		-- this payload and must not be handed authoritative entries (B2).
 		self:_fire(self.Enums.Event.MatchEnded, {
 			winnerTeam = winnerTeam,
 			raiders = self.scores.Raiders,
 			wardens = self.scores.Wardens,
 			roundsPlayed = #self.roundHistory,
-			roundHistory = table.clone(self.roundHistory),
+			roundHistory = self:GetRoundHistory(),
 		})
 		-- Match over: back to lobby for rematch vote / re-fill (§4).
 		self.phase = self.Enums.Phase.Lobby
