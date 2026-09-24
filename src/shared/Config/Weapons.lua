@@ -1,18 +1,25 @@
 --!strict
 --[[
-	BEACON PROTOCOL — weapon catalogue (GDD §6.1, exact MVP numbers).
-	Data-driven: mechanics (firing, recoil, spread) are Phase 2, but these
-	stat blocks are authoritative NOW. Damage model, economy, and the buy
-	menu all read from here — if a number changes, change it here only.
+    BEACON PROTOCOL — weapon catalogue (GDD §6.1, exact MVP numbers).
+    Data-driven: mechanics (firing, recoil, spread) are Phase 2, but these
+    stat blocks are authoritative NOW. Damage model, economy, and the buy
+    menu all read from here — if a number changes, change it here only.
 
-	Damage convention:
-		damage = bodyBase at range <= falloffStartM
-		damage = bodyMin at range >= falloffEndM
-		linear between (GDD §6.1 "Full <= X m; min at Y m")
-		Longshot Mk.II is FLAT 62 up to 90 m (no falloff in MVP).
+    UNIT OF RECORD: STUDS (WORKFLOW.md "Unit of record: studs"). The GDD
+    §6.1 words its bands as metres; the numbers stored here are Roblox studs
+    and are never converted — only the field names changed (falloff*M ->
+    falloff*Studs, 2026-09-20) so a field name can never lie about its unit.
+    The "-- Full <= 18 m" comments below are the GDD's own wording, kept so
+    the numbers can be traced back to the design doc.
 
-	Manufacturers (flavor, §6): VEXEL Ordnance, HALCYON Arms,
-	LONGSIGHT Precision, KESSLER Knives.
+    Damage convention:
+        damage = bodyBase at range <= falloffStartStuds
+        damage = bodyMin at range >= falloffEndStuds
+        linear between (GDD §6.1 "Full <= X m; min at Y m")
+        Longshot Mk.II is FLAT 62 across its whole band (no falloff in MVP).
+
+    Manufacturers (flavor, §6): VEXEL Ordnance, HALCYON Arms,
+    LONGSIGHT Precision, KESSLER Knives.
 ]]
 
 -- falloff stages are associative: key = damage at range, threshold = range
@@ -38,8 +45,8 @@ local Weapons = {
 		slot = "Sidearm",
 		damageBase = 34, -- body damage at full range
 		damageMin = 26, -- body damage at min range
-		falloffStartM = 18, -- "Full <= 18 m"
-		falloffEndM = 46, -- "min at 46 m"
+		falloffStartStuds = 18, -- "Full <= 18 m"
+		falloffEndStuds = 46, -- "min at 46 m"
 		fireRateRPM = 240, -- semi-auto, 240 RPM cap
 		semiAuto = true,
 		magazine = 12,
@@ -58,8 +65,8 @@ local Weapons = {
 		slot = "Primary",
 		damageBase = 24,
 		damageMin = 16,
-		falloffStartM = 12, -- "Full <= 12 m"
-		falloffEndM = 30, -- "min at 30 m"
+		falloffStartStuds = 12, -- "Full <= 12 m"
+		falloffEndStuds = 30, -- "min at 30 m"
 		fireRateRPM = 600, -- auto
 		semiAuto = false,
 		magazine = 25,
@@ -78,8 +85,8 @@ local Weapons = {
 		slot = "Primary",
 		damageBase = 30,
 		damageMin = 22,
-		falloffStartM = 25, -- "Full <= 25 m"
-		falloffEndM = 60, -- "min at 60 m"
+		falloffStartStuds = 25, -- "Full <= 25 m"
+		falloffEndStuds = 60, -- "min at 60 m"
 		fireRateRPM = 620, -- auto
 		semiAuto = false,
 		magazine = 30,
@@ -101,9 +108,9 @@ local Weapons = {
 		slot = "Primary",
 		damageBase = 62, -- flat in MVP
 		damageMin = 62, -- no falloff <= 90 m; flat everywhere in MVP
-		falloffStartM = math.huge, -- "No falloff <= 90 m" — none implemented
-		falloffEndM = math.huge,
-		effectiveRangeM = 90,
+		falloffStartStuds = math.huge, -- "No falloff <= 90 m" — none implemented
+		falloffEndStuds = math.huge,
+		effectiveRangeStuds = 90,
 		fireRateRPM = 150, -- semi-auto
 		semiAuto = true,
 		magazine = 10,
@@ -148,7 +155,7 @@ function Weapons.DamageAtRange(id, rangeStuds)
 	if w.class == "Melee" then
 		return w.slashDamage -- melee handled by DamageModel directly
 	end
-	return LinearDamage(w.damageBase, w.falloffStartM, w.falloffEndM, w.damageMin, rangeStuds)
+	return LinearDamage(w.damageBase, w.falloffStartStuds, w.falloffEndStuds, w.damageMin, rangeStuds)
 end
 
 return Weapons
