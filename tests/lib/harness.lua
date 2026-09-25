@@ -761,6 +761,82 @@ function H.aimAt(fromX, fromY, fromZ, victimId)
 	return { x = fromX, y = fromY, z = fromZ }, { x = dx, y = dy, z = dz }
 end
 
+--[[
+    Per-client combat feedback spy (2026-09-20 fix: no hit-feedback broadcast).
+
+    Knit's contract is that `Client.Signal:Fire(player, ...)` is delivered to
+    THAT player's client ONLY — the player argument IS the delivery. So the
+    spy records every delivery together with the player it was addressed to,
+    and counts deliveries with no player at all: in Knit that is a broadcast
+    to every client, which for hit/damage feedback is the defect being
+    regression-tested (it leaked every player's hits to everyone).
+
+    usage:
+        local log = H.spyCombat()
+        ... fire a shot ...
+        H.signalsFor(log, 101)        -> { "HitConfirmed", "ShotResolved" }
+        H.payloadFor(log, 106, "DamageTaken").hp
+        H.recipients(log)             -> { 101, 106 }
+        log.broadcast                 -> must be 0
+]]
+function H.spyCombat()
+	local combat = H.service("Combat")
+	local log = { entries = {}, broadcast = {} }
+
+	local function record(signalName)
+		return function(player, payload)
+			local userId = nil
+			if type(player) == "table" then
+				userId = player.UserId
+			end
+			if userId == nil then
+				table.insert(log.broadcast, signalName)
+			end
+			table.insert(log.entries, { signal = signalName, to = userId, payload = payload })
+		end
+	end
+
+	combat.Client.HitConfirmed:Connect(record("HitConfirmed"))
+	combat.Client.ShotResolved:Connect(record("ShotResolved"))
+	combat.Client.DamageTaken:Connect(record("DamageTaken"))
+	return log
+end
+
+-- Every signal name delivered to one player, sorted (order-independent).
+function H.signalsFor(log, userId)
+	local names = {}
+	for _, entry in log.entries do
+		if entry.to == userId then
+			table.insert(names, entry.signal)
+		end
+	end
+	table.sort(names)
+	return names
+end
+
+-- The payload delivered to `userId` on `signal`, or nil when they got none.
+function H.payloadFor(log, userId, signalName)
+	for _, entry in log.entries do
+		if entry.to == userId and entry.signal == signalName then
+			return entry.payload
+		end
+	end
+	return nil
+end
+
+-- Every player id that received ANY signal, sorted.
+function H.recipients(log)
+	local seen, out = {}, {}
+	for _, entry in log.entries do
+		if entry.to ~= nil and not seen[entry.to] then
+			seen[entry.to] = true
+			table.insert(out, entry.to)
+		end
+	end
+	table.sort(out)
+	return out
+end
+
 -- Join `count` players through the real Players.PlayerAdded path.
 function H.joinPlayers(firstUserId, count)
 	local players = {}

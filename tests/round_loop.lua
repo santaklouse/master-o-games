@@ -601,6 +601,167 @@ test("a window above the GDD hard cap of 200 ms is rejected", function()
 end)
 
 -- ==========================================================================
+section("P2a — world raycast: cover stops bullets")
+-- ==========================================================================
+
+-- A 30-stud shooting lane along -Z: shooter (raider 101, the free Viper-9
+-- sidearm) at the origin, victim (warden 106) down the lane. Both stand on
+-- the same ground, so torso centres are 4.15 studs up (pivot 3.0 + the
+-- torso region's offsetY) and heads are 4.5 (WORKFLOW "Hitbox vertical
+-- frame"). One Heartbeat at the current instant records both positions.
+local TORSO_Y = 4.15
+local function lane(rangeStuds)
+	local ctx = freshAction()
+	H.setCharacter(101, 0, 3, 0)
+	H.setCharacter(106, 0, 3, -rangeStuds)
+	H.advance(0)
+	return ctx
+end
+
+-- Fire level down -Z through the victim's TORSO band. Aiming at the torso
+-- centre matters: the pivot is the LIMBS sphere centre, so a ray aimed at
+-- the pivot hits limbs, not the torso.
+local function fireAtTorso(shooterId, victimId)
+	return H.fire(shooterId, "Viper9", { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+end
+
+test("a wall in the way turns the shot into a MISS_GEOMETRY with zero damage", function()
+	lane(30)
+	H.addWall("DockContainer", { 0, 3, -15 }, { 20, 12, 2 })
+	local hpBefore = H.service("PlayerState"):GetHealth(106)
+
+	local result = fireAtTorso(101, 106)
+
+	eq(result.ok, true, "the shot itself is legal and resolves (it is a miss, not a refusal)")
+	eq(result.hit, nil, "the wall stopped it")
+	eq(result.reason, "MISS_GEOMETRY", "explicit, loggable reason")
+	eq(result.blockedBy.name, "DockContainer", "the blocking geometry is named")
+	eq(result.blockedBy.distance, 14, "block distance along the ray")
+	eq(H.service("PlayerState"):GetHealth(106), hpBefore, "zero damage through cover")
+end)
+
+test("the same ray with the cover removed hits (the wall is what stopped it)", function()
+	lane(30)
+	local hpBefore = H.service("PlayerState"):GetHealth(106)
+
+	-- Control: identical origin/direction, no geometry at all.
+	local open = fireAtTorso(101, 106)
+	eq(open.reason, nil, "an unobstructed shot is not reported as a miss")
+	check(open.hit ~= nil, "control shot must hit")
+	eq(open.hit.region, Enums.HitRegion.Torso, "the ray runs through the torso band")
+	check(open.hit.distance > 28 and open.hit.distance < 29, "torso surface is ~28.9 studs out")
+
+	-- Damage is exactly the config's answer for that range: the whole chain
+	-- (config studs -> DamageModel -> PlayerHealth) is pinned to one number.
+	-- `hit.distance` is rounded to 0.1 for the HUD while health is kept to 2
+	-- decimals, so compare within one rounding step of the falloff slope.
+	local expected = H.Shared.Weapons.DamageAtRange("Viper9", open.hit.distance)
+	eq(open.damage, math.round(expected * 10) / 10, "damage matches the weapon config at range")
+	local hpAfterOpen = H.service("PlayerState"):GetHealth(106)
+	check(
+		math.abs((hpBefore - hpAfterOpen) - expected) < 0.05,
+		("health lost %.4f but the config says %.4f at %s studs"):format(
+			hpBefore - hpAfterOpen,
+			expected,
+			open.hit.distance
+		)
+	)
+
+	-- Now the same shot with a container in the way.
+	H.addWall("DockContainer", { 0, 3, -15 }, { 20, 12, 2 })
+	H.advance(0.3) -- clear the Viper-9 fire-rate gate (240 RPM -> 0.25 s)
+	local blocked = fireAtTorso(101, 106)
+	eq(blocked.reason, "MISS_GEOMETRY", "the wall stops the identical shot")
+	eq(blocked.hit, nil, "no hit through cover")
+	eq(H.service("PlayerState"):GetHealth(106), hpAfterOpen, "no damage from the blocked shot")
+end)
+
+test("only cover NEARER than the victim blocks the shot", function()
+	lane(30)
+
+	-- Beyond the victim (z = -40): the shot reaches the victim first.
+	H.addWall("FarPipe", { 0, 4, -40 }, { 10, 10, 2 })
+	local past = fireAtTorso(101, 106)
+	eq(past.reason, nil, "geometry beyond the victim must not block")
+	check(past.hit ~= nil, "the victim is still hittable through the far geometry")
+
+	-- Nearer than the victim's torso surface (28.85 studs): it stops the shot.
+	-- The gantry's near face is 28 studs out, so the block distance is smaller.
+	H.clearWalls()
+	H.addWall("Gantry", { 0, 4, -28.5 }, { 10, 10, 1 })
+	H.advance(0.3)
+	local blocked = fireAtTorso(101, 106)
+	eq(blocked.reason, "MISS_GEOMETRY", "cover nearer than the victim blocks")
+	eq(blocked.hit, nil, "no hit")
+end)
+
+test("HitDetectionCore takes the world query as an injected seam (Logic stays DataModel-free)", function()
+	-- Fix #1's shape: the geometry query is a PARAMETER, so cover is provable
+	-- headlessly and nothing in Logic/ references Workspace.
+	local core = newCore()
+	core:Record(9, 1.0, 0, 3.0, -30, 0)
+	local snap = core:GetSnapshotAt(9, 1.0)
+	check(snap ~= nil, "snapshot")
+	local candidates = core:BuildCandidates(9, snap)
+
+	-- (a) No world installed at all: the module still resolves hits.
+	local open = core:ResolveRay(0, TORSO_Y, 0, 0, 0, -1, 300, candidates, nil)
+	check(open ~= nil, "with no world query the shot reaches the target")
+	eq(open.region, Enums.HitRegion.Torso, "torso")
+
+	-- (b) A stub wall 15 studs out — a plain function, not Roblox geometry.
+	local wall, block = core:ResolveRay(
+		0,
+		TORSO_Y,
+		0,
+		0,
+		0,
+		-1,
+		300,
+		candidates,
+		function(_, _, _, _, _, _, maxDistance)
+			eq(maxDistance, 300, "the provider is handed the hitscan range")
+			return { distance = 15, name = "FakeContainer" }
+		end
+	)
+	eq(wall, nil, "the stub wall stops the bullet")
+	eq(block.distance, 15, "block distance")
+	eq(block.name, "FakeContainer", "the block carries a loggable name")
+
+	-- (c) The same wall beyond the target does not block.
+	local behind = core:ResolveRay(0, TORSO_Y, 0, 0, 0, -1, 300, candidates, function()
+		return { distance = 40, name = "FarWall" }
+	end)
+	check(behind ~= nil, "geometry beyond the target does not block the shot")
+end)
+
+test("weapon config is in studs and the rename changed no damage number", function()
+	local Weapons = H.Shared.Weapons
+	-- GDD §6.1 band numbers, unit of record = studs (WORKFLOW.md).
+	eq(Weapons.Viper9.falloffStartStuds, 18, "Viper-9 full-damage band")
+	eq(Weapons.Viper9.falloffEndStuds, 46, "Viper-9 min-damage band")
+	eq(Weapons.CQB2.falloffStartStuds, 12, "CQB-2 full-damage band")
+	eq(Weapons.CQB2.falloffEndStuds, 30, "CQB-2 min-damage band")
+	eq(Weapons.ARC5.falloffStartStuds, 25, "ARC-5 full-damage band")
+	eq(Weapons.ARC5.falloffEndStuds, 60, "ARC-5 min-damage band")
+
+	eq(Weapons.DamageAtRange("Viper9", 18), 34, "Viper-9 body damage at full range")
+	eq(Weapons.DamageAtRange("Viper9", 32), 30, "Viper-9 half-way through falloff")
+	eq(Weapons.DamageAtRange("Viper9", 46), 26, "Viper-9 body damage at min range")
+	eq(Weapons.DamageAtRange("CQB2", 12), 24, "CQB-2 body damage at full range")
+	eq(Weapons.DamageAtRange("CQB2", 30), 16, "CQB-2 body damage at min range")
+	eq(Weapons.DamageAtRange("ARC5", 25), 30, "ARC-5 body damage at full range")
+	eq(Weapons.DamageAtRange("ARC5", 60), 22, "ARC-5 body damage at min range")
+	eq(Weapons.DamageAtRange("Longshot", 57), 62, "Longshot is flat 62 across the whole map")
+
+	-- A field name must never lie about its unit again.
+	local src = H.readSource("src/shared/Config/Weapons.lua")
+	for _, bad in { "falloffStartM", "falloffEndM", "effectiveRangeM" } do
+		check(src:find(bad) == nil, "Weapons.lua still names " .. bad .. " (the unit of record is studs)")
+	end
+end)
+
+-- ==========================================================================
 section("B4 — players joining / leaving mid-round")
 -- ==========================================================================
 
