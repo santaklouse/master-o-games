@@ -762,6 +762,153 @@ test("weapon config is in studs and the rename changed no damage number", functi
 end)
 
 -- ==========================================================================
+section("P2a — per-client hit feedback (never broadcast)")
+-- ==========================================================================
+
+test("a hit tells the shooter and the victim, and nobody else", function()
+	lane(30)
+	local log = H.spyCombat()
+	local hpBefore = H.service("PlayerState"):GetHealth(106)
+
+	local result = fireAtTorso(101, 106)
+	check(result.hit ~= nil, "the shot must hit for this test to mean anything")
+
+	-- The shooter: the hitmarker and the shot resolution — exactly two signals.
+	deepEq(H.signalsFor(log, 101), { "HitConfirmed", "ShotResolved" }, "the shooter's signals")
+	local confirm = H.payloadFor(log, 101, "HitConfirmed")
+	eq(confirm.victimId, 106, "the hitmarker names the victim")
+	eq(confirm.region, Enums.HitRegion.Torso, "the hitmarker names the region")
+	eq(confirm.damage, result.damage, "the hitmarker carries the damage dealt")
+	eq(confirm.lethal, false, "a 30-stud torso hit is not lethal")
+	eq(H.payloadFor(log, 101, "ShotResolved").hit.id, 106, "the shot resolution names the victim")
+
+	-- The victim: their OWN damage and resulting health, from the server's
+	-- authoritative numbers.
+	deepEq(H.signalsFor(log, 106), { "DamageTaken" }, "the victim's signals")
+	local taken = H.payloadFor(log, 106, "DamageTaken")
+	eq(taken.attackerId, 101, "the victim learns who shot them")
+	eq(taken.weaponId, "Viper9", "the victim learns what shot them")
+	eq(taken.damage, result.damage, "the victim's damage is the server's number")
+	eq(taken.hp, H.service("PlayerState"):GetHealth(106), "the victim's hp is the authoritative hp")
+	eq(taken.maxHp, Constants.MaxHealth, "the victim's max hp")
+	eq(math.round((hpBefore - taken.hp) * 10) / 10, result.damage, "health lost matches the damage dealt")
+
+	-- Nobody else was told anything about this shot, and nothing was broadcast.
+	deepEq(H.recipients(log), { 101, 106 }, "only the two players involved were told")
+	eq(#log.broadcast, 0, "no hit feedback was broadcast to all clients")
+end)
+
+test("a shot stopped by cover tells the shooter only — the victim hears nothing", function()
+	lane(30)
+	H.addWall("DockContainer", { 0, 3, -15 }, { 20, 12, 2 })
+	local log = H.spyCombat()
+	local hpBefore = H.service("PlayerState"):GetHealth(106)
+
+	local result = fireAtTorso(101, 106)
+	eq(result.reason, "MISS_GEOMETRY", "the shot is blocked")
+
+	deepEq(H.signalsFor(log, 101), { "ShotResolved" }, "the shooter still gets their shot resolution")
+	eq(H.payloadFor(log, 101, "ShotResolved").reason, "MISS_GEOMETRY", "carrying the miss reason")
+	eq(H.payloadFor(log, 101, "ShotResolved").blockedBy.name, "DockContainer", "and the blocker")
+	eq(H.count(H.signalsFor(log, 106)), 0, "the victim is not told about a shot that hit a wall")
+	deepEq(H.recipients(log), { 101 }, "only the shooter was told")
+	eq(#log.broadcast, 0, "no broadcast")
+	eq(H.service("PlayerState"):GetHealth(106), hpBefore, "no damage")
+end)
+
+test("a clean miss with nothing in the way stays private to the shooter", function()
+	lane(30)
+	local log = H.spyCombat()
+
+	-- Two studs to the side of the victim's lane, parallel to it: the ray
+	-- reaches max range in open air (the victim's torso sphere is r=1.15).
+	local miss = H.fire(101, "Viper9", { x = 2, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+	eq(miss.ok, true, "the shot resolves")
+	eq(miss.reason, "MISS", "clean-miss reason")
+	eq(miss.hit, nil, "no hit")
+	eq(miss.blockedBy, nil, "nothing blocked it")
+	deepEq(H.signalsFor(log, 101), { "ShotResolved" }, "the shooter's signals")
+	eq(H.count(H.signalsFor(log, 106)), 0, "the victim hears nothing about a miss on someone else")
+	deepEq(H.recipients(log), { 101 }, "only the shooter was told")
+	eq(#log.broadcast, 0, "no broadcast")
+end)
+
+-- ==========================================================================
+section("P2a — lag-compensation window boundary (server clock, ~200 ms)")
+-- ==========================================================================
+
+test("the window is inclusive at 200 ms: that shot resolves against the rewound position", function()
+	freshAction()
+	H.setCharacter(101, 0, 3, 0) -- shooter, facing -Z
+	H.setCharacter(106, 0, 3, -30) -- victim at the far end of the lane
+	H.advance(0) -- t = 20.0 : both positions recorded
+	local fireTime = H.serverNow()
+
+	-- The victim steps 12 studs sideways, then we fire at where they WERE.
+	H.setCharacter(106, 12, 3, -30)
+	H.advance(Constants.LagCompensationWindowMs / 1000) -- t = 20.2, one full window later
+
+	local origin, dir = { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 }
+	local atBoundary = H.fire(101, "Viper9", origin, dir, fireTime)
+	check(
+		atBoundary.ok,
+		"a 200 ms-old fire time is accepted (the window is inclusive): " .. tostring(atBoundary.reason)
+	)
+	check(atBoundary.hit ~= nil, "it resolved against the position the victim held 200 ms ago")
+	eq(atBoundary.hit.region, Enums.HitRegion.Torso, "the rewound torso was hit")
+
+	-- Same ray at the CURRENT instant: the victim has left that spot, so the
+	-- shot misses. This is exactly the shot that needs the rewind to land.
+	H.advance(0.3) -- past the Viper-9 fire-rate gate (240 RPM -> 0.25 s)
+	local nowShot = H.fire(101, "Viper9", origin, dir)
+	eq(nowShot.hit, nil, "without the rewind the identical shot misses")
+	eq(nowShot.reason, "MISS", "clean miss")
+end)
+
+test("a fire time beyond the window is rejected with an explicit reason and no effect", function()
+	freshAction()
+	H.setCharacter(101, 0, 3, 0)
+	H.setCharacter(106, 0, 3, -30)
+	H.advance(0) -- t = 20.0
+	local fireTime = H.serverNow()
+	H.advance(0.25) -- t = 20.25 : the shot claims to be 250 ms old
+
+	local log = H.spyCombat()
+	local hpBefore = H.service("PlayerState"):GetHealth(106)
+	local result = H.fire(101, "Viper9", { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 }, fireTime)
+
+	eq(result.ok, false, "a shot older than the window is refused, not guessed")
+	eq(result.reason, "STALE_FIRE_TIME", "explicit reason")
+	eq(result.ageMs, 250, "the reported age in ms")
+	eq(result.hit, nil, "a refused shot has no hit")
+	eq(H.service("PlayerState"):GetHealth(106), hpBefore, "no damage from a refused shot")
+	deepEq(H.recipients(log), {}, "nobody is told about a refused shot")
+end)
+
+test("a fire time far in the future is refused too (clock-skew guard)", function()
+	freshAction()
+	H.setCharacter(101, 0, 3, 0)
+	H.setCharacter(106, 0, 3, -30)
+	H.advance(0)
+
+	local result = H.fire(101, "Viper9", { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 }, H.serverNow() + 1.0)
+	eq(result.ok, false, "refused")
+	eq(result.reason, "FUTURE_FIRE_TIME", "explicit reason")
+end)
+
+test("the retention cutoff keeps a sample exactly one window old (Logic)", function()
+	local core = newCore()
+	core:Record(1, 1.0, 0, 0, 0, 0) -- exactly 200 ms before the newest sample
+	core:Record(1, 1.2, 0, 0, 0, 0)
+	eq(#core.history[1], 2, "the sample exactly one window old is retained")
+	eq(core.history[1][1].t, 1.0, "oldest retained sample")
+
+	core:Record(1, 1.201, 0, 0, 0, 0) -- drift one millisecond further
+	eq(#core.history[1], 2, "a sample beyond the window is pruned")
+	eq(core.history[1][1].t, 1.2, "the new oldest retained sample")
+end)
+
+-- ==========================================================================
 section("B4 — players joining / leaving mid-round")
 -- ==========================================================================
 
