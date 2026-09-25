@@ -24,6 +24,21 @@
         windowSeconds must be <= Constants.LagCompensationWindowMs / 1000.
         A caller that tries a larger window gets an error — the rewind is
         hooded at 200 ms, period.
+
+    CLOCK DOMAIN (WORKFLOW.md "Clock domains"): every `t` that reaches this
+    module — recorded samples and the fireTime they are compared against —
+    must come from the SAME clock, and on the server that clock is
+    `Workspace:GetServerTimeNow()`. `os.clock()` is process CPU time, an
+    unrelated domain: mixing the two makes every delta absurd, so
+    GetSnapshotAt never lands inside its tolerance and lag compensation
+    silently resolves nothing. The window is TIME-based on that clock (a
+    time-ordered sample buffer), never a fixed sample count.
+
+    WORLD GEOMETRY (cover): this module can see no DataModel, so world
+    geometry is queried through an INJECTED seam — a `worldQuery` function
+    passed to ResolveRay by CombatService (or by a test). Nothing in
+    Logic/ may reference Workspace, and every behaviour below is defined
+    with no DataModel present at all.
 ]]
 
 local HitDetectionCore = {}
@@ -165,16 +180,28 @@ end
     wins; HEAD regions beat TORSO/limbs at equal distance (small tie-break,
     standard FPS behavior so neck-line shots favor the head).
     @param ox,oy,oz ray origin
-    @param dx,dy,dz normalized direction (caller normalizes; we tolerate non-unit)
+    @param dx,dy,dz direction (caller should normalize; we tolerate non-unit)
     @param maxDistance
     @param candidates array from BuildCandidates (any players in range)
-    @return hit {id, region, distance} | nil
+    @param worldQuery INJECTED world-geometry seam, optional:
+        worldQuery(ox, oy, oz, dx, dy, dz, maxDistance)
+          -> { distance = number, name = string? } | nil
+        the distance along this same ray at which solid world geometry
+        (walls/cover) is hit, or nil when the ray reaches maxDistance in
+        open air. CombatService supplies the Roblox Workspace:Raycast
+        adapter; tests/harness supply fake walls. `nil` means "no world
+        installed" — Logic must run with no DataModel present.
+    @return hit {id, region, distance} | nil, block {distance, name} | nil
+        hit ~= nil                -> the shot reached that entity
+        hit == nil, block ~= nil  -> world geometry stopped it: a MISS
+                                     (zero damage) with a loggable reason
+        hit == nil, block == nil  -> clean miss, nothing in the way
 ]]
-function HitDetectionCore:ResolveRay(ox, oy, oz, dx, dy, dz, maxDistance, candidates)
+function HitDetectionCore:ResolveRay(ox, oy, oz, dx, dy, dz, maxDistance, candidates, worldQuery)
 	-- Normalize direction
 	local len = math.sqrt(dx * dx + dy * dy + dz * dz)
 	if len < 1e-6 then
-		return nil
+		return nil, nil
 	end
 	dx, dy, dz = dx / len, dy / len, dz / len
 
@@ -197,14 +224,26 @@ function HitDetectionCore:ResolveRay(ox, oy, oz, dx, dy, dz, maxDistance, candid
 		end
 	end
 
+	-- Cover test, after the entity test so both distances are known: solid
+	-- world geometry NEARER than the entity stops the bullet. Ties go to the
+	-- entity (a target flush against a wall is still hittable).
+	if worldQuery ~= nil then
+		local block = worldQuery(ox, oy, oz, dx, dy, dz, maxDistance)
+		if block ~= nil and type(block.distance) == "number" then
+			if bestHit == nil or block.distance < bestT then
+				return nil, block
+			end
+		end
+	end
+
 	if bestHit == nil then
-		return nil
+		return nil, nil
 	end
 	return {
 		id = bestHit.id,
 		region = bestHit.region,
 		distance = bestT,
-	}
+	}, nil
 end
 
 return HitDetectionCore

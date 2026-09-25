@@ -240,7 +240,19 @@ local function loadNode(node)
 			task = taskStub,
 			Instance = { new = newInstance },
 			os = H.osShape,
-			Enum = {},
+			-- Only the Roblox surface the hit path actually touches: the
+			-- world-geometry raycast built in CombatService.
+			Vector3 = {
+				new = function(x, y, z)
+					return { X = x, Y = y, Z = z }
+				end,
+			},
+			RaycastParams = {
+				new = function()
+					return { FilterType = nil, FilterDescendantsInstances = {} }
+				end,
+			},
+			Enum = { RaycastFilterType = { Exclude = "Exclude" } },
 		}),
 		injectGlobals = false,
 	})
@@ -433,6 +445,122 @@ local function newPlayers()
 	return players
 end
 
+-- ------------------------------------------------------------- fake Workspace
+-- Roblox always has a Workspace and the server tree now asks it for two
+-- things: the SERVER CLOCK (`GetServerTimeNow`, the domain every combat
+-- timestamp lives in — see WORKFLOW "Clock domains") and WORLD GEOMETRY
+-- (`Raycast`, so cover can stop bullets). Both contracts are stubbed for
+-- real here: the clock is the harness clock, and Raycast is an actual
+-- ray-vs-AABB test against parts added with H.addWall, so "a wall blocks the
+-- shot" is provable headlessly instead of merely asserted.
+local function rayBoxDistance(ox, oy, oz, dx, dy, dz, part)
+	-- Slab test. Returns the distance along the ray at which the box is
+	-- entered, or nil when the ray misses it.
+	local lo, hi = {}, {}
+	local size = { part.Size.X, part.Size.Y, part.Size.Z }
+	local origin = { ox, oy, oz }
+	local dir = { dx, dy, dz }
+	local centre = { part.Position.X, part.Position.Y, part.Position.Z }
+
+	local tmin, tmax = -math.huge, math.huge
+	for axis = 1, 3 do
+		lo[axis] = centre[axis] - size[axis] / 2
+		hi[axis] = centre[axis] + size[axis] / 2
+		local o, d = origin[axis], dir[axis]
+		if math.abs(d) < 1e-9 then
+			if o < lo[axis] or o > hi[axis] then
+				return nil -- parallel and outside this slab
+			end
+		else
+			local t1 = (lo[axis] - o) / d
+			local t2 = (hi[axis] - o) / d
+			if t1 > t2 then
+				t1, t2 = t2, t1
+			end
+			tmin = math.max(tmin, t1)
+			tmax = math.min(tmax, t2)
+			if tmin > tmax then
+				return nil
+			end
+		end
+	end
+	if tmin >= 0 then
+		return tmin
+	end
+	if tmax >= 0 then
+		return tmax -- origin is inside the box
+	end
+	return nil
+end
+
+local function newWorkspace()
+	local workspace = {
+		ClassName = "Workspace",
+		Name = "Workspace",
+		_parts = {},
+	}
+
+	-- The server clock. CombatService records samples, gates fire rate and
+	-- validates client fireTimes in this domain only.
+	function workspace:GetServerTimeNow()
+		return H.clock.t
+	end
+
+	-- H.addWall(name, {x,y,z}, {x,y,z}) — a solid block of world geometry.
+	function workspace:AddWall(name, position, size)
+		local part = {
+			ClassName = "Part",
+			Name = name,
+			Anchored = true,
+			Position = { X = position[1], Y = position[2], Z = position[3] },
+			Size = { X = size[1], Y = size[2], Z = size[3] },
+		}
+		table.insert(self._parts, part)
+		return part
+	end
+
+	function workspace:ClearWalls()
+		self._parts = {}
+	end
+
+	-- Workspace:Raycast(origin, direction, params): the direction's
+	-- magnitude is the ray length, exactly like Roblox. Honours
+	-- FilterDescendantsInstances as an exclusion list (that is how
+	-- CombatService keeps player characters out of the geometry query).
+	function workspace:Raycast(origin, direction, params)
+		local ignored = {}
+		if params ~= nil then
+			for _, instance in params.FilterDescendantsInstances or {} do
+				ignored[instance] = true
+			end
+		end
+		local dx, dy, dz = direction.X, direction.Y, direction.Z
+		local rayLength = math.sqrt(dx * dx + dy * dy + dz * dz)
+		if rayLength < 1e-6 then
+			return nil
+		end
+		dx, dy, dz = dx / rayLength, dy / rayLength, dz / rayLength
+
+		local ox, oy, oz = origin.X, origin.Y, origin.Z
+		local best = nil
+		for _, part in self._parts do
+			if not ignored[part] then
+				local distance = rayBoxDistance(ox, oy, oz, dx, dy, dz, part)
+				if distance ~= nil and distance <= rayLength and (best == nil or distance < best.Distance) then
+					best = {
+						Instance = part,
+						Distance = distance,
+						Position = { X = ox + dx * distance, Y = oy + dy * distance, Z = oz + dz * distance },
+					}
+				end
+			end
+		end
+		return best
+	end
+
+	return workspace
+end
+
 -- ----------------------------------------------------------------- the tree
 -- Mirrors what `rojo build default.project.json` produces (verified with
 -- `rojo sourcemap`): ServerScriptService.Server is the init.server.lua Script
@@ -466,6 +594,7 @@ local function buildTree()
 
 	addChild(root, H.players)
 	addChild(root, H.runService)
+	addChild(root, H.workspace)
 
 	return {
 		root = root,
@@ -502,6 +631,7 @@ function H.boot()
 	H.clock.t = 0
 	H.players = newPlayers()
 	H.knit = newKnit()
+	H.workspace = newWorkspace()
 	H.runService = {
 		ClassName = "RunService",
 		Name = "RunService",
@@ -562,6 +692,151 @@ function H.service(name)
 end
 
 -- --------------------------------------------------------------- helpers
+-- Solid world geometry for cover tests: H.addWall("Wall", {x,y,z}, {sx,sy,sz}).
+function H.addWall(name, position, size)
+	return H.workspace:AddWall(name, position, size)
+end
+
+function H.clearWalls()
+	H.workspace:ClearWalls()
+end
+
+-- The server clock the combat path uses (Workspace:GetServerTimeNow()).
+function H.serverNow()
+	return H.workspace:GetServerTimeNow()
+end
+
+--[[
+    Attach a minimal character to a player. The server tree reads exactly two
+    things off a character:
+        character:GetPivot().Position / .ToEulerAnglesYXZ()  (the recorder)
+        character.Head.Position                             (origin sanity)
+    `y` is the ROOT PIVOT height — the torso centre, ~3 studs above the feet
+    for a stock R6 character (WORKFLOW "Hitbox vertical frame"). Head sits
+    1.5 studs above the pivot, where a real R6 head part is.
+]]
+function H.setCharacter(playerId, x, y, z)
+	local player = H.players:GetPlayerByUserId(playerId)
+	assert(player ~= nil, ("H.setCharacter: no player %d in the game"):format(playerId))
+	local character = newInstance("Model", ("Character%d"):format(playerId))
+	character.GetPivot = function()
+		return {
+			Position = { X = x, Y = y, Z = z },
+			ToEulerAnglesYXZ = function()
+				return 0, 0, 0
+			end,
+		}
+	end
+	local head = newInstance("Part", "Head")
+	head.Position = { X = x, Y = y + 1.5, Z = z }
+	addChild(character, head)
+	player.Character = character
+	return character
+end
+
+--[[
+    Drive a real client fire intent through the real remote:
+        CombatService.Client:FireRequest(player, payload)
+    `origin`/`dir` are plain {x,y,z} tables. fireTime defaults to the server
+    clock, which is what a correct client sends (Workspace:GetServerTimeNow).
+]]
+function H.fire(playerId, weaponId, origin, dir, fireTime)
+	local player = H.players:GetPlayerByUserId(playerId)
+	assert(player ~= nil, ("H.fire: no player %d in the game"):format(playerId))
+	return H.service("Combat").Client:FireRequest(player, {
+		weaponId = weaponId,
+		fireTime = fireTime or H.serverNow(),
+		origin = origin,
+		dir = dir,
+	})
+end
+
+-- Aim from `from` at the torso centre of a player's character, returning the
+-- origin/dir pair a client would send. Used to write cover tests in studs.
+function H.aimAt(fromX, fromY, fromZ, victimId)
+	local player = H.players:GetPlayerByUserId(victimId)
+	local pivot = player.Character:GetPivot()
+	local target = pivot.Position
+	local dx, dy, dz = target.X - fromX, target.Y - fromY, target.Z - fromZ
+	return { x = fromX, y = fromY, z = fromZ }, { x = dx, y = dy, z = dz }
+end
+
+--[[
+    Per-client combat feedback spy (2026-09-20 fix: no hit-feedback broadcast).
+
+    Knit's contract is that `Client.Signal:Fire(player, ...)` is delivered to
+    THAT player's client ONLY — the player argument IS the delivery. So the
+    spy records every delivery together with the player it was addressed to,
+    and counts deliveries with no player at all: in Knit that is a broadcast
+    to every client, which for hit/damage feedback is the defect being
+    regression-tested (it leaked every player's hits to everyone).
+
+    usage:
+        local log = H.spyCombat()
+        ... fire a shot ...
+        H.signalsFor(log, 101)        -> { "HitConfirmed", "ShotResolved" }
+        H.payloadFor(log, 106, "DamageTaken").hp
+        H.recipients(log)             -> { 101, 106 }
+        log.broadcast                 -> must be 0
+]]
+function H.spyCombat()
+	local combat = H.service("Combat")
+	local log = { entries = {}, broadcast = {} }
+
+	local function record(signalName)
+		return function(player, payload)
+			local userId = nil
+			if type(player) == "table" then
+				userId = player.UserId
+			end
+			if userId == nil then
+				table.insert(log.broadcast, signalName)
+			end
+			table.insert(log.entries, { signal = signalName, to = userId, payload = payload })
+		end
+	end
+
+	combat.Client.HitConfirmed:Connect(record("HitConfirmed"))
+	combat.Client.ShotResolved:Connect(record("ShotResolved"))
+	combat.Client.DamageTaken:Connect(record("DamageTaken"))
+	return log
+end
+
+-- Every signal name delivered to one player, sorted (order-independent).
+function H.signalsFor(log, userId)
+	local names = {}
+	for _, entry in log.entries do
+		if entry.to == userId then
+			table.insert(names, entry.signal)
+		end
+	end
+	table.sort(names)
+	return names
+end
+
+-- The payload delivered to `userId` on `signal`, or nil when they got none.
+function H.payloadFor(log, userId, signalName)
+	for _, entry in log.entries do
+		if entry.to == userId and entry.signal == signalName then
+			return entry.payload
+		end
+	end
+	return nil
+end
+
+-- Every player id that received ANY signal, sorted.
+function H.recipients(log)
+	local seen, out = {}, {}
+	for _, entry in log.entries do
+		if entry.to ~= nil and not seen[entry.to] then
+			seen[entry.to] = true
+			table.insert(out, entry.to)
+		end
+	end
+	table.sort(out)
+	return out
+end
+
 -- Join `count` players through the real Players.PlayerAdded path.
 function H.joinPlayers(firstUserId, count)
 	local players = {}
