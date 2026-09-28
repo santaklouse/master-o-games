@@ -1,0 +1,308 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Item class="Folder" referent="RBX0">
+		<Properties>
+			<string name="Name">MeridianDocks</string>
+		</Properties>
+	<Item class="Folder" referent="RBX6">
+		<Properties>
+			<string name="Name">Structure</string>
+		</Properties>
+	<Item class="Part" referent="RBX1">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<Color3uint8 name="Color3uint8">4283059278</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>-2</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1376</token>
+			<string name="Name">MD_GroundSlab</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>236</X>
+				<Y>4</Y>
+				<Z>220</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX2">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>6</Y>
+				<Z>-104</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallN</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>224</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX3">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>6</Y>
+				<Z>104</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallS</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>224</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX4">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-112</X>
+				<Y>6</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>208</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX5">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>112</X>
+				<Y>6</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>208</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	</Item>
+	<Item class="Folder" referent="RBX7">
+		<Properties>
+			<string name="Name">Cover</string>
+		</Properties>
+	</Item>
+	<Item class="Folder" referent="RBX10">
+		<Properties>
+			<string name="Name">Markers</string>
+		</Properties>
+	<Item class="Part" referent="RBX8">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<Color3uint8 name="Color3uint8">4291325480</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.110000</Y>
+				<Z>-90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_MusterDeckPad</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>68</X>
+				<Y>0.200000</Y>
+				<Z>20</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX9">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<Color3uint8 name="Color3uint8">4280842430</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.110000</Y>
+				<Z>90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_YardHousePad</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>68</X>
+				<Y>0.200000</Y>
+				<Z>20</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	</Item>
+	<Item class="Folder" referent="RBX14">
+		<Properties>
+			<string name="Name">Spawns</string>
+		</Properties>
+	<Item class="SpawnLocation" referent="RBX11">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.500000</Y>
+				<Z>-90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<bool name="Enabled">true</bool>
+			<string name="Name">Spawn_Raiders</string>
+			<bool name="Neutral">true</bool>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>1</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="SpawnLocation" referent="RBX12">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.500000</Y>
+				<Z>90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<bool name="Enabled">true</bool>
+			<string name="Name">Spawn_Wardens</string>
+			<bool name="Neutral">true</bool>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>1</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="SpawnLocation" referent="RBX13">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<CoordinateFrame name="CFrame">
+				<X>-40</X>
+				<Y>0.500000</Y>
+				<Z>-90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<bool name="Enabled">true</bool>
+			<string name="Name">Spawn_Practice</string>
+			<bool name="Neutral">true</bool>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>1</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	</Item>
+	</Item>
+</roblox>

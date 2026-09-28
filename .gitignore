@@ -6,6 +6,9 @@ build/
 # Rojo
 .rojo/
 *.rbxmx
+# ...except the committed MERIDIAN DOCKS model, tracked on purpose the same way
+# packages/knit/Knit.rbxm is: without it `rojo build` fails on a fresh clone.
+!map/*.rbxmx
 
 # Tooling caches
 .selene/
