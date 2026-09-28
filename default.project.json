@@ -2,6 +2,83 @@
   "name": "beacon-protocol",
   "tree": {
     "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "StreamingEnabled": false
+      },
+      "$path": "map/MeridianDocks.rbxmx"
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "ClockTime": 17.4,
+        "GeographicLatitude": 25,
+        "Ambient": [
+          0.227451,
+          0.258824,
+          0.305882
+        ],
+        "OutdoorAmbient": [
+          0.376471,
+          0.407843,
+          0.454902
+        ],
+        "Brightness": 2.0,
+        "ExposureCompensation": 0.15,
+        "GlobalShadows": true,
+        "ShadowSoftness": 0.25,
+        "EnvironmentDiffuseScale": 0.4,
+        "EnvironmentSpecularScale": 0.3,
+        "FogColor": [
+          0.203922,
+          0.243137,
+          0.290196
+        ],
+        "FogStart": 60,
+        "FogEnd": 340
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.26,
+          "Offset": 0,
+          "Color": [
+            0.376471,
+            0.423529,
+            0.478431
+          ],
+          "Decay": [
+            0.35,
+            0.42,
+            0.58
+          ],
+          "Glare": 0.4,
+          "Haze": 1.2
+        }
+      },
+      "SkyGrade": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0,
+          "Contrast": 0.15,
+          "Saturation": -0.12,
+          "TintColor": [
+            1,
+            0.968627,
+            0.92549
+          ]
+        }
+      },
+      "NeonBloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.6,
+          "Size": 16,
+          "Threshold": 1.25
+        }
+      }
+    },
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "Packages": {
