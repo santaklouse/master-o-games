@@ -1282,6 +1282,85 @@ test("match #2 round 1 is live: every seat has health and a shootable loadout", 
 end)
 
 -- ==========================================================================
+section("P2B — AlphaRun: one source of run numbers")
+-- ==========================================================================
+
+-- The Alpha overlay is the single source of the run numbers (plan §1/§5, and
+-- the ruling in gdd/weapons-tranche-readiness-notes.md §14). It must be
+-- reachable from BOTH the tree the server boots and the suite: a config the
+-- harness cannot see is a config the tests cannot guard.
+
+test("the Alpha overlay is the run the plan and the contract agree on", function()
+	local AlphaRun = H.Shared.AlphaRun
+	eq(AlphaRun.Enabled, true, "the Alpha overlay is on")
+	eq(AlphaRun.Overrides.TeamSize, 2, "TeamSize")
+	eq(AlphaRun.Overrides.PlayersToStart, 1, "PlayersToStart (practice start)")
+	eq(AlphaRun.Overrides.WinScore, 3, "WinScore")
+	eq(AlphaRun.Overrides.MaxRounds, 5, "MaxRounds")
+	eq(AlphaRun.Overrides.SideSwapAfterRound, 2, "side swap after round 2")
+	for key in AlphaRun.Overrides do
+		check(AlphaRun.AllowedFields[key] == true, key .. " is not declared overridable (a silent no-op override)")
+		check(Constants[key] ~= nil, key .. " is not a field of the GDD baseline")
+	end
+end)
+
+test("RunConfig applies the overlay, and the one switch restores the GDD run", function()
+	local RunConfig = H.Shared.RunConfig
+	local alpha = RunConfig.resolve(Constants, H.Shared.AlphaRun)
+	eq(alpha.TeamSize, 2, "TeamSize")
+	eq(alpha.PlayersToStart, 1, "PlayersToStart")
+	eq(alpha.WinScore, 3, "WinScore")
+	eq(alpha.MaxRounds, 5, "MaxRounds")
+	eq(alpha.SideSwapAfterRound, 2, "SideSwapAfterRound")
+	eq(alpha.BuyPhaseDuration, Constants.BuyPhaseDuration, "everything not overridden is the baseline")
+	eq(alpha.Teams.Raiders, Constants.Teams.Raiders, "nested tables survive the merge")
+	check(alpha ~= Constants, "a resolved run is a copy — the baseline must never be mutated")
+	eq(Constants.TeamSize, 5, "the GDD baseline is untouched by the overlay")
+
+	local off = RunConfig.resolve(Constants, { Enabled = false, Overrides = alpha })
+	eq(off.TeamSize, Constants.TeamSize, "Enabled = false restores the GDD run")
+	eq(off.WinScore, Constants.WinScore, "with no code change")
+
+	local ok, err = pcall(RunConfig.resolve, Constants, { Enabled = true, Overrides = { NotARunNumber = 1 } })
+	eq(ok, false, "a typo'd override must fail loudly, not silently do nothing")
+	check(tostring(err):find("NotARunNumber") ~= nil, "the error names the key: " .. tostring(err))
+end)
+
+test("the server plays the Alpha run: 2v2 from four players, decided at 3 rounds", function()
+	local ok, err = H.boot({ runConfig = "alpha" })
+	check(ok, "server boot failed under the Alpha run: " .. tostring(err))
+	H.joinPlayers(101, 4)
+	H.advance(Constants.BuyPhaseDuration)
+	local match = H.service("Match")
+	eq(match:IsActionPhase(), true, "four players are enough to start under TeamSize 2")
+	local snapshot = H.snapshot()
+	eq(#snapshot.teams.Raiders, 2, "raiders")
+	eq(#snapshot.teams.Wardens, 2, "wardens")
+	eq(snapshot.spectators, 0, "nobody left over")
+	eq(snapshot.round, 1, "round 1")
+
+	-- The FSM reads the Alpha side-swap round (2), not the GDD's 7.
+	local alpha = H.Shared.RunConfig.resolve(Constants, H.Shared.AlphaRun)
+	local sm = H.Logic.MatchStateMachine.new({ Constants = alpha, Enums = Enums })
+	eq(sm:GetSide(Constants.Teams.Raiders, 2), Enums.Side.Attack, "round 2: raiders still attack")
+	eq(sm:GetSide(Constants.Teams.Raiders, 3), Enums.Side.Defend, "round 3: the sides have swapped")
+
+	-- The match itself: raiders win the first three rounds.
+	local ended = nil
+	match.Client.MatchEnded:Connect(function(payload)
+		ended = payload
+	end)
+	killAll({ 103, 104 }) -- round 1 (already in ACTION)
+	H.advance(Constants.RoundEndPause)
+	playRounds({ 103, 104 }, 2) -- rounds 2 and 3
+	check(ended ~= nil, "MatchEnded fired")
+	eq(ended.winnerTeam, Constants.Teams.Raiders, "winner")
+	eq(ended.raiders, 3, "the match is decided at the Alpha WinScore of 3")
+	eq(ended.roundsPlayed, 3, "three rounds played")
+	eq(match:GetPhase(), Enums.Phase.Lobby, "back to the lobby")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
 	for _, failure in failed do

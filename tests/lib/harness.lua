@@ -588,6 +588,30 @@ local function newWorkspace()
 	return workspace
 end
 
+-- ReplicatedStorage.Shared's module nodes — identical in both trees, so a
+-- module loaded on the client resolves the same config as on the server.
+-- `runConfigMode` decides which RUN the tree boots under:
+--   "alpha"    the shipped overlay: src/shared/Config/AlphaRun.lua is executed
+--              by the tree, exactly as it will be in the game.
+--   "baseline" (default) the same AlphaRun switch turned OFF, so the 5v5 /
+--              win-8 fixtures that pin the round mechanics keep testing a
+--              baseline run; Alpha's own numbers are guarded by the alpha-mode
+--              cases and by H.Shared.AlphaRun (the real file).
+local function addSharedModules(shared)
+	moduleNode(shared, "Constants", "src/shared/Constants.lua")
+	moduleNode(shared, "Enums", "src/shared/Enums.lua")
+	local config = addChild(shared, newInstance("Folder", "Config"))
+	moduleNode(config, "Weapons", "src/shared/Config/Weapons.lua")
+	moduleNode(config, "Economy", "src/shared/Config/Economy.lua")
+	moduleNode(config, "Combat", "src/shared/Config/Combat.lua")
+	local alphaRun = moduleNode(config, "AlphaRun", "src/shared/Config/AlphaRun.lua")
+	moduleNode(config, "RunConfig", "src/shared/Config/RunConfig.lua")
+	if H.runConfigMode ~= "alpha" then
+		alphaRun._value = { Enabled = false, Overrides = {} }
+	end
+	return config
+end
+
 -- ----------------------------------------------------------------- the tree
 -- Mirrors what `rojo build default.project.json` produces (verified with
 -- `rojo sourcemap`): ServerScriptService.Server is the init.server.lua Script
@@ -601,12 +625,7 @@ local function buildTree()
 	knitNode._value = H.knit
 
 	local shared = moduleNode(replicatedStorage, "Shared", "src/shared/init.lua")
-	moduleNode(shared, "Constants", "src/shared/Constants.lua")
-	moduleNode(shared, "Enums", "src/shared/Enums.lua")
-	local config = addChild(shared, newInstance("Folder", "Config"))
-	moduleNode(config, "Weapons", "src/shared/Config/Weapons.lua")
-	moduleNode(config, "Economy", "src/shared/Config/Economy.lua")
-	moduleNode(config, "Combat", "src/shared/Config/Combat.lua")
+	addSharedModules(shared)
 
 	local serverScriptService = addChild(root, newInstance("ServerScriptService", "ServerScriptService"))
 	local serverScript = moduleNode(serverScriptService, "Server", "src/server/init.server.lua", "Script")
@@ -663,6 +682,7 @@ function H.boot(options)
 	lastError = nil
 	cache = {}
 	H.clock.t = 0
+	H.runConfigMode = options.runConfig or "baseline"
 	H.players = newPlayers()
 	for index = 1, (options.preJoinPlayers or 0) do
 		H.players:Add((options.firstUserId or 101) + index - 1)
@@ -871,12 +891,7 @@ function H.bootClient(options)
 	local knitNode = moduleNode(packages, "Knit", nil)
 	knitNode._value = H.clientKnit
 	local shared = moduleNode(replicatedStorage, "Shared", "src/shared/init.lua")
-	moduleNode(shared, "Constants", "src/shared/Constants.lua")
-	moduleNode(shared, "Enums", "src/shared/Enums.lua")
-	local config = addChild(shared, newInstance("Folder", "Config"))
-	moduleNode(config, "Weapons", "src/shared/Config/Weapons.lua")
-	moduleNode(config, "Economy", "src/shared/Config/Economy.lua")
-	moduleNode(config, "Combat", "src/shared/Config/Combat.lua")
+	addSharedModules(shared)
 
 	-- Mirrors default.project.json: StarterPlayer.StarterPlayerScripts.Client
 	-- = src/client, i.e. the init.client.lua Script with Controllers/ and UI/.
@@ -1143,6 +1158,11 @@ H.Shared = {
 	Weapons = require("../../src/shared/Config/Weapons"),
 	Economy = require("../../src/shared/Config/Economy"),
 	Combat = require("../../src/shared/Config/Combat"),
+	-- The real Alpha run overlay + the (pure) resolver that binds it to the
+	-- baseline. Both are plain Luau, so the suite can guard the shipped run
+	-- numbers directly instead of only through a booted tree.
+	AlphaRun = require("../../src/shared/Config/AlphaRun"),
+	RunConfig = require("../../src/shared/Config/RunConfig"),
 }
 
 return H

@@ -46,7 +46,10 @@ local MatchService = Knit.CreateService({
 })
 
 local sm = MatchStateMachine.new({
-	Constants = Shared.Constants,
+	-- Shared.RunConfig, not Shared.Constants: the run numbers come from ONE
+	-- module (the GDD baseline with the AlphaRun overlay applied), so the FSM,
+	-- the economy and any later UI read the same run.
+	Constants = Shared.RunConfig,
 	Enums = Shared.Enums,
 	-- Roblox's `os` is not a clock object (no `now`); hand the FSM the
 	-- function it actually calls. os.clock() is the server's monotonic
@@ -158,7 +161,7 @@ function MatchService:KnitStart()
 				local now = os.clock()
 				for _, player in Players:GetPlayers() do
 					local last = lastActive[player.UserId]
-					if last and (now - last) > Shared.Constants.AFKKickSeconds then
+					if last and (now - last) > Shared.RunConfig.AFKKickSeconds then
 						sm:DemoteToSpectator(player.UserId)
 					end
 				end
