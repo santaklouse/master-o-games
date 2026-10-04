@@ -42,25 +42,33 @@ local ECONOMY_SIGNALS = {
 }
 
 function MatchController:KnitInit()
+	-- CLIENT idiom: on the client the reflected service object carries the
+	-- Client signals/properties DIRECTLY (KnitClient.BuildService ->
+	-- ClientComm:BuildObject; packages/knit/docs/services.md:210,
+	-- packages/knit/test/client/KnitClientTest.client.lua:8-17). `.Client` is
+	-- the SERVER-side idiom (docs/services.md:199) and is nil here — indexing it
+	-- threw inside KnitInit, the boot promise swallowed it via
+	-- init.client.lua's :catch(warn), KnitStart never ran, and with it went the
+	-- FetchMatchState snapshot and the 5 s ReportActive keepalive (Q2-1).
 	local match = Knit.GetService("Match")
 	local economy = Knit.GetService("Economy")
 	local combat = Knit.GetService("Combat")
 
 	for _, name in MATCH_SIGNALS do
-		match.Client[name]:Connect(function(payload)
+		match[name]:Connect(function(payload)
 			EventBus.Publish(name, payload)
 		end)
 	end
 
 	for _, name in ECONOMY_SIGNALS do
-		economy.Client[name]:Connect(function(payload)
+		economy[name]:Connect(function(payload)
 			EventBus.Publish(name, payload)
 		end)
 	end
 
 	-- Combat hits are combat UI (hitmarker/kill feed) — Phase 2, but wire
 	-- the seam now so no service changes are needed later.
-	combat.Client.HitConfirmed:Connect(function(payload)
+	combat.HitConfirmed:Connect(function(payload)
 		EventBus.Publish("HitConfirmed", payload)
 	end)
 
@@ -68,10 +76,16 @@ function MatchController:KnitInit()
 end
 
 function MatchController:KnitStart()
+	-- Same client idiom as KnitInit: the remote methods hang off the reflected
+	-- service object itself. With `.Client` here these two calls fail inside
+	-- their pcall and are SILENT — no snapshot and no keepalive, which is the
+	-- other half of the Q2-1 symptom (Q4-3: 60 s idle -> demoted to spectator).
+	local match = Knit.GetService("Match")
+
 	-- Bootstrap HUD state (phase, round, scores, teams) for late joiners.
 	task.spawn(function()
 		local ok, snapshot = pcall(function()
-			return Knit.GetService("Match").Client.FetchMatchState:InvokeAsync()
+			return match.FetchMatchState:InvokeAsync()
 		end)
 		if ok and snapshot then
 			EventBus.Publish("MatchSnapshot", snapshot)
@@ -83,7 +97,7 @@ function MatchController:KnitStart()
 		while true do
 			task.wait(5)
 			pcall(function()
-				Knit.GetService("Match").Client.ReportActive:InvokeAsync()
+				match.ReportActive:InvokeAsync()
 			end)
 		end
 	end)

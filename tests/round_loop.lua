@@ -1053,6 +1053,314 @@ test("a team emptied during the buy phase does not inherit its last alive count"
 end)
 
 -- ==========================================================================
+section("P2B — join race: a player already in the game when KnitStart runs")
+-- ==========================================================================
+
+-- Knit task.spawns every service's KnitStart after all KnitInit calls resolve
+-- (KnitServer.lua:445-454), so in Studio Play the local player is already in
+-- Players:GetPlayers() when MatchService connects PlayerAdded. Without the
+-- catch-up loop that player was never seated: no roster entry, no ledger, no
+-- health -> he could not buy, could not be credited and could not be shot
+-- (gdd/spawn-and-boot-audit.md Q1-4). `preJoinPlayers` models exactly that.
+
+test("an early joiner is seated, ledger-registered and registered for the round", function()
+	-- Six early joiners so the slate covers both teams (slots fill Raiders
+	-- first, so 101-105 are Raiders and 106 is the first Warden).
+	local ok, err = H.boot({ preJoinPlayers = 6 })
+	check(ok, "server boot failed: " .. tostring(err))
+	local match = H.service("Match")
+	local economy = H.service("Economy")
+	local playerState = H.service("PlayerState")
+
+	-- Seat: the roster entry every later system keys off.
+	eq(match:GetPlayerTeam(101), Constants.Teams.Raiders, "first early joiner holds a raider seat")
+	eq(match:GetPlayerRole(101), Enums.Role.Raider, "role")
+	eq(match:GetPlayerTeam(106), Constants.Teams.Wardens, "sixth early joiner holds a warden seat")
+	eq(match:GetPlayerRole(106), Enums.Role.Warden, "role")
+
+	-- Ledger: he can be credited and he can buy.
+	eq(economy:GetBalance(101), 0, "ledger entry exists (pistol round starts at 0 credits)")
+	eq(economy:GetLoadout(101).sidearm, "Viper9", "free sidearm issued to an early joiner")
+	local balances = economy.Client.Credits:Get()
+	eq(H.count(balances), 6, "the credits property carries every early joiner")
+
+	-- Health: he can be shot.
+	eq(playerState:IsAlive(101), true, "health entry registered: the early joiner is shootable")
+	eq(playerState:GetHealth(101), Constants.MaxHealth, "full health")
+
+	local snapshot = H.snapshot()
+	eq(H.count(snapshot.teams.Raiders), 5, "snapshot roster carries the early joiners")
+	eq(H.count(snapshot.teams.Wardens), 1, "and the one warden")
+	eq(snapshot.phase, Enums.Phase.Lobby, "six of ten players: the lobby is still filling")
+end)
+
+test("every player is seated exactly once, early or late", function()
+	H.boot({ preJoinPlayers = 1 })
+	H.players:Add(102) -- a late joiner through the real PlayerAdded path
+	H.flush()
+	local balances = H.service("Economy").Client.Credits:Get()
+	eq(H.count(balances), 2, "one ledger entry per player")
+	eq(H.service("Match"):GetPlayerTeam(101), Constants.Teams.Raiders, "early joiner's seat")
+	eq(H.service("Match"):GetPlayerTeam(102), Constants.Teams.Raiders, "late joiner's seat")
+	eq(H.service("PlayerState"):IsAlive(101), true, "early joiner alive")
+	eq(H.service("PlayerState"):IsAlive(102), true, "late joiner alive")
+end)
+
+test("the early joiner is a live target: a shot on him resolves as a hit, not DEAD", function()
+	H.boot({ preJoinPlayers = 1 })
+	H.joinPlayers(102, 9) -- nine later joiners fill the lobby -> the match starts
+	H.advance(Constants.BuyPhaseDuration)
+	local match = H.service("Match")
+	eq(match:IsActionPhase(), true, "the match starts with the early joiner in it")
+	eq(match:GetPlayerTeam(101), Constants.Teams.Raiders, "the early joiner's seat survives the fill")
+	eq(match:GetPlayerTeam(106), Constants.Teams.Wardens, "warden 106 is the shooter (no friendly fire)")
+
+	-- The 30-stud lane the cover cases use: warden 106 shoots down -Z at the
+	-- early-joining raider 101 at the far end.
+	H.setCharacter(106, 0, 3, 0)
+	H.setCharacter(101, 0, 3, -30)
+	H.advance(0)
+	local hpBefore = H.service("PlayerState"):GetHealth(101)
+	local shot = H.fire(106, "Viper9", { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+
+	eq(shot.ok, true, "the shot is legal (not refused for a dead/unknown shooter)")
+	check(shot.hit ~= nil, "the shot must land on the early joiner: " .. tostring(shot.reason))
+	eq(shot.hit.id, 101, "the early joiner is the one who took the hit")
+	eq(shot.hit.region, Enums.HitRegion.Torso, "torso band")
+	check(H.service("PlayerState"):GetHealth(101) < hpBefore, "damage went through the health authority")
+end)
+
+-- ==========================================================================
+section("P2B — client boot: MatchController starts on the client")
+-- ==========================================================================
+
+-- On the client the reflected service object carries the Client signals
+-- DIRECTLY (KnitClient.BuildService -> ClientComm:BuildObject); `.Client` is the
+-- SERVER idiom and is nil there. Indexing it threw inside KnitInit,
+-- init.client.lua's :catch(warn) swallowed the boot promise, so KnitStart never
+-- ran: no FetchMatchState snapshot and no 5 s ReportActive keepalive — which is
+-- also why an idle player was demoted to spectator after 60 s (Q2-1, Q4-3).
+
+-- The UI event contract (README / alpha-ui-spec): every signal the controller
+-- must re-emit on the EventBus.
+local CLIENT_SIGNAL_NAMES = {
+	{ "Match", "PhaseChanged" },
+	{ "Match", "PlayerJoined" },
+	{ "Match", "PlayerLeft" },
+	{ "Match", "MatchStarted" },
+	{ "Match", "BuyPhaseStarted" },
+	{ "Match", "BuyPhaseEnded" },
+	{ "Match", "RoundStarted" },
+	{ "Match", "RoundEnded" },
+	{ "Match", "ScoreUpdated" },
+	{ "Match", "MatchEnded" },
+	{ "Match", "PlayerEliminated" },
+	{ "Match", "PlayerDemotedToSpectator" },
+	{ "Match", "RematchVoteUpdated" },
+	{ "Economy", "CreditsChanged" },
+	{ "Combat", "HitConfirmed" },
+}
+
+test("the client tree boots: every controller's KnitInit resolves", function()
+	local client = H.bootClient({ server = { preJoinPlayers = 1 } })
+	check(client.bootOk, "init.client.lua failed to run: " .. tostring(client.bootErr))
+	check(client.initError == nil, "a controller's KnitInit errored: " .. tostring(client.initError))
+
+	-- The negative control that makes the case meaningful: the client service
+	-- object has NO `.Client` field — indexing it is the defect itself.
+	local reflected = client.knit.GetService("Match")
+	eq(reflected.Client, nil, "the client service carries its signals directly, with no .Client proxy")
+	eq(type(reflected.PhaseChanged.Connect), "function", "PhaseChanged is a signal on the service object")
+	eq(type(reflected.FetchMatchState.InvokeAsync), "function", "remote methods are invokable on it")
+end)
+
+test("the controller subscribes to every service signal through the client idiom", function()
+	local seen = {}
+	local client = H.bootClient({
+		server = { preJoinPlayers = 1 },
+		beforeFlush = function(self)
+			for _, entry in CLIENT_SIGNAL_NAMES do
+				seen[entry[2]] = 0
+				self.eventBus.Subscribe(entry[2], function()
+					seen[entry[2]] += 1
+				end)
+			end
+		end,
+	})
+	check(client.initError == nil, "KnitInit errored, so nothing was subscribed: " .. tostring(client.initError))
+
+	-- Fire each signal from the SERVER, the way the game does.
+	for _, entry in CLIENT_SIGNAL_NAMES do
+		H.service(entry[1]).Client[entry[2]]:Fire({ event = entry[2] })
+	end
+	H.flush()
+
+	for _, entry in CLIENT_SIGNAL_NAMES do
+		eq(seen[entry[2]], 1, entry[1] .. "." .. entry[2] .. " must reach the EventBus exactly once")
+	end
+end)
+
+test("KnitStart runs: the snapshot is fetched and the 5 s keepalive reports active", function()
+	local snapshot = nil
+	local client = H.bootClient({
+		server = { preJoinPlayers = 1 },
+		beforeFlush = function(self)
+			self.eventBus.Subscribe("MatchSnapshot", function(payload)
+				snapshot = payload
+			end)
+		end,
+	})
+	check(client.initError == nil, "KnitInit errored, so KnitStart never ran: " .. tostring(client.initError))
+	check(snapshot ~= nil, "no MatchSnapshot: the controller's KnitStart never ran")
+	eq(snapshot.phase, Enums.Phase.Lobby, "the snapshot is the server's authoritative state")
+	eq(snapshot.round, 0, "round")
+	deepEq(snapshot.teams.Raiders, { 101 }, "and it carries this player's own seat")
+
+	-- The keepalive: `while true do task.wait(5)` -> Match:ReportActive, which
+	-- resets the server's AFK timer (that is the Q4-3 fix).
+	local before = #client.calls
+	H.wakeParked()
+	local called = false
+	for index = before + 1, #client.calls do
+		if client.calls[index] == "Match:ReportActive" then
+			called = true
+		end
+	end
+	check(called, "the keepalive never called Match:ReportActive (calls: " .. table.concat(client.calls, ", ") .. ")")
+end)
+
+-- ==========================================================================
+section("P2B — round start state, match #2 included")
+-- ==========================================================================
+
+-- MatchEnded wipes the health registry AND the ledger match-scoped (§5.3) and
+-- the FSM returns to LOBBY, so re-registering only on RoundEnded left round 1
+-- of match #2 with no live entries: every shot came back DEAD
+-- (CombatService:168-170), and with no re-issued free sidearm it also came back
+-- NOT_OWNED while every balance was 0 (Q4-5). The round-start hook now runs on
+-- the phase a round actually begins in.
+
+test("match #2 round 1 is live: every seat has health and a shootable loadout", function()
+	local ctx = freshAction()
+	local match = H.service("Match")
+	local economy = H.service("Economy")
+	local playerState = H.service("PlayerState")
+
+	playRounds(ctx.wardens, Constants.WinScore) -- the raiders take the match
+	H.flush()
+	eq(match:GetPhase(), Enums.Phase.Lobby, "match #1 is over")
+	eq(playerState:GetHealth(101), nil, "MatchEnded wipes the health registry (§5.3)")
+	eq(H.count(economy.Client.Credits:Get()), 0, "and the credits (§5.3)")
+
+	for _, player in ctx.players do
+		match.Client:RequestRematchVote(player)
+	end
+	H.flush()
+	eq(H.snapshot().phase, Enums.Phase.BuyPhase, "match #2 round 1 starts in the buy phase")
+
+	-- The seat state the round needs: a live entry for every rostered player...
+	for id = 101, 110 do
+		eq(playerState:IsAlive(id), true, ("player %d has a live entry for match #2 round 1"):format(id))
+		eq(playerState:GetHealth(id), Constants.MaxHealth, ("player %d is at full health"):format(id))
+	end
+	-- ...and the free loadout §5.3 issues every round (credits are 0 here, so
+	-- without it nobody could shoot at all).
+	eq(economy:GetLoadout(101).sidearm, "Viper9", "the free sidearm is re-issued for match #2")
+
+	-- And the whole chain works: a warden shoots a raider in match #2 round 1.
+	H.advance(Constants.BuyPhaseDuration)
+	eq(H.snapshot().phase, Enums.Phase.Action, "match #2 round 1 is in action")
+	H.setCharacter(106, 0, 3, 0)
+	H.setCharacter(101, 0, 3, -30)
+	H.advance(0)
+	local hpBefore = playerState:GetHealth(101)
+	local shot = H.fire(106, "Viper9", { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+	eq(shot.ok, true, "the shot is accepted (not DEAD / NOT_OWNED): " .. tostring(shot.reason))
+	check(shot.hit ~= nil, "and it lands: " .. tostring(shot.reason))
+	eq(shot.hit.id, 101, "on the raider")
+	check(playerState:GetHealth(101) < hpBefore, "damage is applied through the health authority")
+end)
+
+-- ==========================================================================
+section("P2B — AlphaRun: one source of run numbers")
+-- ==========================================================================
+
+-- The Alpha overlay is the single source of the run numbers (plan §1/§5, and
+-- the ruling in gdd/weapons-tranche-readiness-notes.md §14). It must be
+-- reachable from BOTH the tree the server boots and the suite: a config the
+-- harness cannot see is a config the tests cannot guard.
+
+test("the Alpha overlay is the run the plan and the contract agree on", function()
+	local AlphaRun = H.Shared.AlphaRun
+	eq(AlphaRun.Enabled, true, "the Alpha overlay is on")
+	eq(AlphaRun.Overrides.TeamSize, 2, "TeamSize")
+	eq(AlphaRun.Overrides.PlayersToStart, 1, "PlayersToStart (practice start)")
+	eq(AlphaRun.Overrides.WinScore, 3, "WinScore")
+	eq(AlphaRun.Overrides.MaxRounds, 5, "MaxRounds")
+	eq(AlphaRun.Overrides.SideSwapAfterRound, 2, "side swap after round 2")
+	for key in AlphaRun.Overrides do
+		check(AlphaRun.AllowedFields[key] == true, key .. " is not declared overridable (a silent no-op override)")
+		check(Constants[key] ~= nil, key .. " is not a field of the GDD baseline")
+	end
+end)
+
+test("RunConfig applies the overlay, and the one switch restores the GDD run", function()
+	local RunConfig = H.Shared.RunConfig
+	local alpha = RunConfig.resolve(Constants, H.Shared.AlphaRun)
+	eq(alpha.TeamSize, 2, "TeamSize")
+	eq(alpha.PlayersToStart, 1, "PlayersToStart")
+	eq(alpha.WinScore, 3, "WinScore")
+	eq(alpha.MaxRounds, 5, "MaxRounds")
+	eq(alpha.SideSwapAfterRound, 2, "SideSwapAfterRound")
+	eq(alpha.BuyPhaseDuration, Constants.BuyPhaseDuration, "everything not overridden is the baseline")
+	eq(alpha.Teams.Raiders, Constants.Teams.Raiders, "nested tables survive the merge")
+	check(alpha ~= Constants, "a resolved run is a copy — the baseline must never be mutated")
+	eq(Constants.TeamSize, 5, "the GDD baseline is untouched by the overlay")
+
+	local off = RunConfig.resolve(Constants, { Enabled = false, Overrides = alpha })
+	eq(off.TeamSize, Constants.TeamSize, "Enabled = false restores the GDD run")
+	eq(off.WinScore, Constants.WinScore, "with no code change")
+
+	local ok, err = pcall(RunConfig.resolve, Constants, { Enabled = true, Overrides = { NotARunNumber = 1 } })
+	eq(ok, false, "a typo'd override must fail loudly, not silently do nothing")
+	check(tostring(err):find("NotARunNumber") ~= nil, "the error names the key: " .. tostring(err))
+end)
+
+test("the server plays the Alpha run: 2v2 from four players, decided at 3 rounds", function()
+	local ok, err = H.boot({ runConfig = "alpha" })
+	check(ok, "server boot failed under the Alpha run: " .. tostring(err))
+	H.joinPlayers(101, 4)
+	H.advance(Constants.BuyPhaseDuration)
+	local match = H.service("Match")
+	eq(match:IsActionPhase(), true, "four players are enough to start under TeamSize 2")
+	local snapshot = H.snapshot()
+	eq(#snapshot.teams.Raiders, 2, "raiders")
+	eq(#snapshot.teams.Wardens, 2, "wardens")
+	eq(snapshot.spectators, 0, "nobody left over")
+	eq(snapshot.round, 1, "round 1")
+
+	-- The FSM reads the Alpha side-swap round (2), not the GDD's 7.
+	local alpha = H.Shared.RunConfig.resolve(Constants, H.Shared.AlphaRun)
+	local sm = H.Logic.MatchStateMachine.new({ Constants = alpha, Enums = Enums })
+	eq(sm:GetSide(Constants.Teams.Raiders, 2), Enums.Side.Attack, "round 2: raiders still attack")
+	eq(sm:GetSide(Constants.Teams.Raiders, 3), Enums.Side.Defend, "round 3: the sides have swapped")
+
+	-- The match itself: raiders win the first three rounds.
+	local ended = nil
+	match.Client.MatchEnded:Connect(function(payload)
+		ended = payload
+	end)
+	killAll({ 103, 104 }) -- round 1 (already in ACTION)
+	H.advance(Constants.RoundEndPause)
+	playRounds({ 103, 104 }, 2) -- rounds 2 and 3
+	check(ended ~= nil, "MatchEnded fired")
+	eq(ended.winnerTeam, Constants.Teams.Raiders, "winner")
+	eq(ended.raiders, 3, "the match is decided at the Alpha WinScore of 3")
+	eq(ended.roundsPlayed, 3, "three rounds played")
+	eq(match:GetPhase(), Enums.Phase.Lobby, "back to the lobby")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
 	for _, failure in failed do

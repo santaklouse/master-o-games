@@ -46,7 +46,10 @@ local MatchService = Knit.CreateService({
 })
 
 local sm = MatchStateMachine.new({
-	Constants = Shared.Constants,
+	-- Shared.RunConfig, not Shared.Constants: the run numbers come from ONE
+	-- module (the GDD baseline with the AlphaRun overlay applied), so the FSM,
+	-- the economy and any later UI read the same run.
+	Constants = Shared.RunConfig,
 	Enums = Shared.Enums,
 	-- Roblox's `os` is not a clock object (no `now`); hand the FSM the
 	-- function it actually calls. os.clock() is the server's monotonic
@@ -56,6 +59,33 @@ local sm = MatchStateMachine.new({
 
 -- AFK kick bookkeeping (GDD §4: 60 s idle in buy phase / lobby -> spectator)
 local lastActive = {} -- playerId -> os.clock()
+
+-- Every player id this service has already seated (Q1-4 join race).
+local seated = {}
+
+--[[
+    The ONE join path. Knit `task.spawn`s every service's KnitStart after all
+    KnitInit calls resolve (packages/knit/src/KnitServer.lua:445-454), so a
+    player can already be in the game — Studio Play's local player always is —
+    before the PlayerAdded connect below exists. That player used to get no
+    seat, no ledger entry and no health entry: he could not buy, could not be
+    credited and could not be shot. The catch-up loop in KnitStart therefore
+    calls THIS function for everyone already present, so an early joiner and a
+    late joiner take identically the same path. `seated` makes it idempotent.
+]]
+local function seatPlayer(player)
+	if seated[player.UserId] then
+		return
+	end
+	seated[player.UserId] = true
+	lastActive[player.UserId] = os.clock()
+	local result = sm:JoinPlayer(player.UserId)
+	-- Initialize economy + health for the player's role.
+	Knit.GetService("Economy"):InitPlayer(player.UserId)
+	if result.role ~= Shared.Enums.Role.Spectator and result.role ~= Shared.Enums.Role.Waitlist then
+		Knit.GetService("PlayerState"):RegisterForRound(player.UserId, result.team)
+	end
+end
 
 -- Knit signal markers are placeholders until Knit.Start binds remotes; only
 -- these named Client signals are wired to state-machine events.
@@ -86,9 +116,14 @@ function MatchService:KnitStart()
 		end
 	end
 
-	-- Round settlement (§5): award win/loss credits, reset rentals + health.
+	-- Round settlement (§5): award win/loss credits + reset rentals.
 	sm:Connect(Shared.Enums.Event.RoundEnded, function(data)
 		self:_SettleRound(data)
+	end)
+	-- Round START state (health + free loadout) is applied on the phase a round
+	-- actually begins in — BUY_PHASE — not on RoundEnded. See _BeginRound.
+	sm:Connect(Shared.Enums.Event.BuyPhaseStarted, function()
+		self:_BeginRound()
 	end)
 	-- Match end: clear credits + health across the board (§5.3).
 	sm:Connect(Shared.Enums.Event.MatchEnded, function()
@@ -98,17 +133,14 @@ function MatchService:KnitStart()
 		playerState:ResetAllForNewMatch()
 	end)
 
-	-- Player lifecycle
-	Players.PlayerAdded:Connect(function(player)
-		lastActive[player.UserId] = os.clock()
-		local result = sm:JoinPlayer(player.UserId)
-		-- Initialize economy + health for the player's role.
-		Knit.GetService("Economy"):InitPlayer(player.UserId)
-		if result.role ~= Shared.Enums.Role.Spectator and result.role ~= Shared.Enums.Role.Waitlist then
-			Knit.GetService("PlayerState"):RegisterForRound(player.UserId, result.team)
-		end
-	end)
+	-- Player lifecycle: connect first, then seat everyone already here (the
+	-- local player in Studio Play is always already here — Q1-4).
+	Players.PlayerAdded:Connect(seatPlayer)
+	for _, player in Players:GetPlayers() do
+		seatPlayer(player)
+	end
 	Players.PlayerRemoving:Connect(function(player)
+		seated[player.UserId] = nil
 		sm:LeavePlayer(player.UserId)
 		lastActive[player.UserId] = nil
 		Knit.GetService("Economy"):CleanupPlayer(player.UserId)
@@ -129,7 +161,7 @@ function MatchService:KnitStart()
 				local now = os.clock()
 				for _, player in Players:GetPlayers() do
 					local last = lastActive[player.UserId]
-					if last and (now - last) > Shared.Constants.AFKKickSeconds then
+					if last and (now - last) > Shared.RunConfig.AFKKickSeconds then
 						sm:DemoteToSpectator(player.UserId)
 					end
 				end
@@ -210,13 +242,40 @@ end
 
 function MatchService:_SettleRound(data)
 	local economy = Knit.GetService("Economy")
-	local playerState = Knit.GetService("PlayerState")
 	for _, player in Players:GetPlayers() do
 		local team = sm:GetPlayerTeam(player.UserId)
 		if team ~= nil then
 			-- §5.1: round win +3000 / round loss +1500 (flat; no scaling in MVP)
 			economy:SettleRoundForPlayer(player.UserId, team, data.winnerTeam)
-			-- §5.3 rental reset + §7.3 heal for the NEXT round.
+			-- §5.3 rental reset: re-buy each buy phase.
+			economy:ResetRentals(player.UserId)
+		end
+	end
+end
+
+--[[
+    Apply the state every round must START from, for every seated player:
+    §5.3 rentals reset (which re-issues the free sidearm + melee) and a live
+    health entry at full health with the ledger's armor.
+
+    WHY THE BUY PHASE, not RoundEnded (Q4-5): `MatchEnded` wipes both the health
+    registry and the ledger match-scoped (§5.3) and the FSM goes back to LOBBY.
+    RoundEnded-time registration therefore could not survive match #2: the wipe
+    happened *after* it (listeners run through task.spawn, so the order was
+    never guaranteed either), leaving round 1 of the next match with
+      * no live health entries at all -> every shot answered DEAD
+        (CombatService:168-170), and
+      * no issued free loadout -> every shot answered NOT_OWNED, with 0 credits
+        because §5.3 resets credits at match end.
+    BuyPhaseStarted is the phase a round actually begins from, and it fires for
+    round 1 of every match, so one hook covers match #1 and every match after it.
+]]
+function MatchService:_BeginRound()
+	local economy = Knit.GetService("Economy")
+	local playerState = Knit.GetService("PlayerState")
+	for _, player in Players:GetPlayers() do
+		local team = sm:GetPlayerTeam(player.UserId)
+		if team ~= nil then
 			economy:ResetRentals(player.UserId)
 			playerState:RegisterForRound(player.UserId, team)
 		end

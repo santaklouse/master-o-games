@@ -78,6 +78,30 @@ function H.taskCount()
 	return #ready
 end
 
+--[[
+    Resume every task that yielded. Roblox's `task.wait(n)` returns after n
+    seconds; the harness clock only moves when a test moves it, so a test asks
+    for one turn of the event loop explicitly. Tasks that yield again (the 5 s
+    keepalive and AFK loops) are parked again for the next wake.
+
+    Use it to observe periodic work — e.g. one wake after a client boot makes
+    the controller's keepalive loop call Match:ReportActive exactly once.
+]]
+function H.wakeParked()
+	local woken = parked
+	parked = {}
+	for _, item in woken do
+		local ok, err = coroutine.resume(item.co, table.unpack(item.args))
+		if not ok then
+			lastError = err
+		end
+		if coroutine.status(item.co) ~= "dead" then
+			table.insert(parked, item)
+		end
+	end
+	return lastError
+end
+
 -- ------------------------------------------------------------------ stdlib
 -- luau.load() environments do not inherit the standard library, so hand the
 -- stub-loaded files an explicit one (the harness itself still has real globals).
@@ -232,7 +256,10 @@ local function loadNode(node)
 	local chunk = luau.load(readSource(node._path), {
 		debugName = node._path,
 		environment = newEnv({
-			game = H.tree.root,
+			-- `_root` is set on the client tree's nodes: a client module must see
+			-- the CLIENT DataModel (its own ReplicatedStorage.Packages.Knit),
+			-- not the server tree's.
+			game = node._root or H.tree.root,
 			Players = H.players,
 			RunService = H.runService,
 			require = stubRequire,
@@ -561,6 +588,30 @@ local function newWorkspace()
 	return workspace
 end
 
+-- ReplicatedStorage.Shared's module nodes — identical in both trees, so a
+-- module loaded on the client resolves the same config as on the server.
+-- `runConfigMode` decides which RUN the tree boots under:
+--   "alpha"    the shipped overlay: src/shared/Config/AlphaRun.lua is executed
+--              by the tree, exactly as it will be in the game.
+--   "baseline" (default) the same AlphaRun switch turned OFF, so the 5v5 /
+--              win-8 fixtures that pin the round mechanics keep testing a
+--              baseline run; Alpha's own numbers are guarded by the alpha-mode
+--              cases and by H.Shared.AlphaRun (the real file).
+local function addSharedModules(shared)
+	moduleNode(shared, "Constants", "src/shared/Constants.lua")
+	moduleNode(shared, "Enums", "src/shared/Enums.lua")
+	local config = addChild(shared, newInstance("Folder", "Config"))
+	moduleNode(config, "Weapons", "src/shared/Config/Weapons.lua")
+	moduleNode(config, "Economy", "src/shared/Config/Economy.lua")
+	moduleNode(config, "Combat", "src/shared/Config/Combat.lua")
+	local alphaRun = moduleNode(config, "AlphaRun", "src/shared/Config/AlphaRun.lua")
+	moduleNode(config, "RunConfig", "src/shared/Config/RunConfig.lua")
+	if H.runConfigMode ~= "alpha" then
+		alphaRun._value = { Enabled = false, Overrides = {} }
+	end
+	return config
+end
+
 -- ----------------------------------------------------------------- the tree
 -- Mirrors what `rojo build default.project.json` produces (verified with
 -- `rojo sourcemap`): ServerScriptService.Server is the init.server.lua Script
@@ -574,12 +625,7 @@ local function buildTree()
 	knitNode._value = H.knit
 
 	local shared = moduleNode(replicatedStorage, "Shared", "src/shared/init.lua")
-	moduleNode(shared, "Constants", "src/shared/Constants.lua")
-	moduleNode(shared, "Enums", "src/shared/Enums.lua")
-	local config = addChild(shared, newInstance("Folder", "Config"))
-	moduleNode(config, "Weapons", "src/shared/Config/Weapons.lua")
-	moduleNode(config, "Economy", "src/shared/Config/Economy.lua")
-	moduleNode(config, "Combat", "src/shared/Config/Combat.lua")
+	addSharedModules(shared)
 
 	local serverScriptService = addChild(root, newInstance("ServerScriptService", "ServerScriptService"))
 	local serverScript = moduleNode(serverScriptService, "Server", "src/server/init.server.lua", "Script")
@@ -623,13 +669,24 @@ end
 
 -- Boot the real server tree: src/server/init.server.lua through
 -- Knit.AddServices(script.Services) + Knit.Start(), the same path Roblox runs.
-function H.boot()
+--
+-- options.preJoinPlayers = N seats N players in the fake Players list BEFORE
+-- the server chunk runs, i.e. before any service exists to hear PlayerAdded.
+-- Those players are therefore in Players:GetPlayers() when Knit's
+-- task.spawn'ed KnitStart connects its handler — exactly what Studio Play's
+-- local player is (Q1-4 join race). options.firstUserId defaults to 101.
+function H.boot(options)
+	options = options or {}
 	ready = {}
 	parked = {}
 	lastError = nil
 	cache = {}
 	H.clock.t = 0
+	H.runConfigMode = options.runConfig or "baseline"
 	H.players = newPlayers()
+	for index = 1, (options.preJoinPlayers or 0) do
+		H.players:Add((options.firstUserId or 101) + index - 1)
+	end
 	H.knit = newKnit()
 	H.workspace = newWorkspace()
 	H.runService = {
@@ -689,6 +746,202 @@ function H.service(name)
 		)
 	end
 	return service
+end
+
+-- ------------------------------------------------------------ client boot
+--[[
+    The client half of the tree, booted the way Roblox boots it:
+    StarterPlayerScripts.Client -> Knit.AddControllers(script.Controllers) ->
+    Knit.Start().
+
+    The point of this fake is the ONE thing Q2-1 got wrong: on the client the
+    reflected service object carries the service's Client signals (and
+    properties) DIRECTLY — KnitClient.BuildService() calls
+    ClientComm:BuildObject() (packages/knit/src/KnitClient.lua:130-138,
+    docs/services.md:210) — and there is NO `.Client` field on it. That is the
+    server-side idiom. So a controller that indexes `service.Client` gets nil
+    and throws inside KnitInit exactly as it does in Studio.
+
+    Signals are the SERVER's own signal objects (the same table the server
+    fires), so a server-side `:Fire(payload)` reaches the controller's
+    connection: the client test observes the same objects the game ships.
+]]
+local function newClientKnit(serverServices, localPlayer, calls)
+	local Knit = { _controllers = {}, _services = {}, _started = false, _initError = nil }
+
+	function Knit.CreateController(definition)
+		assert(type(definition) == "table", "Knit.CreateController expects a table")
+		assert(type(definition.Name) == "string" and #definition.Name > 0, "Controller.Name must be a non-empty string")
+		assert(not Knit._started, "Controllers cannot be created after Knit.Start()")
+		Knit._controllers[definition.Name] = definition
+		return definition
+	end
+
+	function Knit.AddControllers(parent)
+		local added = {}
+		for _, child in parent:GetChildren() do
+			if child:IsA("ModuleScript") then
+				table.insert(added, stubRequire(child))
+			end
+		end
+		return added
+	end
+
+	-- KnitClient.GetService: the reflected service object, signals directly on it.
+	function Knit.GetService(name)
+		local cached = Knit._services[name]
+		if cached ~= nil then
+			return cached
+		end
+		local definition = serverServices[name]
+		assert(definition ~= nil, `Could not find service "{name}"`)
+		-- Build it BEFORE wiring methods, so Client methods that look a service
+		-- up (Economy.NOT_BUY_PHASE -> Match) see a stable object.
+		local object = {}
+		Knit._services[name] = object
+		for key, value in definition.Client do
+			if key ~= "Server" then
+				if type(value) == "table" and type(value.Connect) == "function" then
+					-- A Client signal: the very object the server fires.
+					object[key] = value
+				elseif type(value) == "table" and type(value.Get) == "function" then
+					-- A Client property: readonly reflection (Get + Observe).
+					object[key] = {
+						Get = function()
+							return value:Get()
+						end,
+						Observe = function(_, fn)
+							fn(value:Get())
+							return function() end
+						end,
+					}
+				elseif type(value) == "function" then
+					-- A Client remote method: InvokeAsync(player, ...) on the
+					-- server is what InvokeAsync(...) does from the client.
+					object[key] = {
+						InvokeAsync = function(_, ...)
+							table.insert(calls, name .. ":" .. key)
+							return value(definition.Client, localPlayer, ...)
+						end,
+					}
+				end
+			end
+		end
+		return object
+	end
+
+	function Knit.Start()
+		assert(not Knit._started, "Knit already started")
+		Knit._started = true
+		for _, controller in Knit._controllers do
+			if type(controller.KnitInit) == "function" then
+				local ok, err = pcall(controller.KnitInit, controller)
+				if not ok then
+					Knit._initError = err
+				end
+			end
+		end
+		for _, controller in Knit._controllers do
+			if type(controller.KnitStart) == "function" then
+				spawnTask(function()
+					controller:KnitStart()
+				end)
+			end
+		end
+		return {
+			catch = function(self, handler)
+				if Knit._initError ~= nil then
+					handler(Knit._initError)
+				end
+				return self
+			end,
+			andThen = function(self, handler)
+				if Knit._initError == nil then
+					handler()
+				end
+				return self
+			end,
+			await = function(self)
+				return self
+			end,
+		}
+	end
+
+	return Knit
+end
+
+-- Boot the server tree, then the client tree against it. Returns
+-- { initError, eventBus, calls, tree } — initError is the error KnitInit threw
+-- (nil on a healthy boot), calls the remote-method invocation log.
+function H.bootClient(options)
+	options = options or {}
+	local serverOk, serverErr = H.boot(options.server)
+	if not serverOk then
+		error("server boot failed before the client could boot: " .. tostring(serverErr))
+	end
+	local localPlayer = H.players:GetPlayers()[1]
+	assert(localPlayer ~= nil, "bootClient needs at least one player (options.server.preJoinPlayers)")
+
+	local calls = {}
+	H.clientKnit = newClientKnit(H.knit._services, localPlayer, calls)
+
+	local root = newInstance("DataModel", "DataModel")
+	local replicatedStorage = addChild(root, newInstance("ReplicatedStorage", "ReplicatedStorage"))
+	local packages = addChild(replicatedStorage, newInstance("Folder", "Packages"))
+	local knitNode = moduleNode(packages, "Knit", nil)
+	knitNode._value = H.clientKnit
+	local shared = moduleNode(replicatedStorage, "Shared", "src/shared/init.lua")
+	addSharedModules(shared)
+
+	-- Mirrors default.project.json: StarterPlayer.StarterPlayerScripts.Client
+	-- = src/client, i.e. the init.client.lua Script with Controllers/ and UI/.
+	local starterPlayer = addChild(root, newInstance("StarterPlayer", "StarterPlayer"))
+	local starterPlayerScripts = addChild(starterPlayer, newInstance("StarterPlayerScripts", "StarterPlayerScripts"))
+	local client = moduleNode(starterPlayerScripts, "Client", "src/client/init.client.lua", "Script")
+	local controllers = addChild(client, newInstance("Folder", "Controllers"))
+	moduleNode(controllers, "Match", "src/client/Controllers/MatchController.lua")
+	local ui = addChild(client, newInstance("Folder", "UI"))
+	local eventBus = moduleNode(ui, "EventBus", "src/client/UI/EventBus.lua")
+
+	H.client = {
+		root = root,
+		script = client,
+		knit = H.clientKnit,
+		calls = calls,
+	}
+	-- Every module in the client tree resolves `game` to the CLIENT DataModel.
+	for _, node in root:GetDescendants() do
+		node._root = root
+	end
+
+	local chunk = luau.load(readSource(client._path), {
+		debugName = client._path,
+		environment = newEnv({
+			game = root,
+			Players = H.players,
+			require = stubRequire,
+			script = client,
+			task = taskStub,
+			os = H.osShape,
+			Instance = { new = newInstance },
+		}),
+		injectGlobals = false,
+	})
+	local ok, err = pcall(chunk)
+	H.client.bootOk = ok
+	H.client.bootErr = err
+	H.client.initError = H.clientKnit._initError
+	H.client.eventBus = stubRequire(eventBus)
+	-- Knit.Start() spawns KnitStart, which the harness only runs on flush — so a
+	-- test that wants to observe the boot itself (e.g. subscribe to the
+	-- EventBus before the snapshot lands) passes options.beforeFlush(client).
+	if ok and options.beforeFlush then
+		options.beforeFlush(H.client)
+	end
+	if ok then
+		H.client.flushError = H.flush()
+	end
+	return H.client
 end
 
 -- --------------------------------------------------------------- helpers
@@ -905,6 +1158,11 @@ H.Shared = {
 	Weapons = require("../../src/shared/Config/Weapons"),
 	Economy = require("../../src/shared/Config/Economy"),
 	Combat = require("../../src/shared/Config/Combat"),
+	-- The real Alpha run overlay + the (pure) resolver that binds it to the
+	-- baseline. Both are plain Luau, so the suite can guard the shipped run
+	-- numbers directly instead of only through a booted tree.
+	AlphaRun = require("../../src/shared/Config/AlphaRun"),
+	RunConfig = require("../../src/shared/Config/RunConfig"),
 }
 
 return H
