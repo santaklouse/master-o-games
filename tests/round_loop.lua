@@ -1131,6 +1131,105 @@ test("the early joiner is a live target: a shot on him resolves as a hit, not DE
 end)
 
 -- ==========================================================================
+section("P2B — client boot: MatchController starts on the client")
+-- ==========================================================================
+
+-- On the client the reflected service object carries the Client signals
+-- DIRECTLY (KnitClient.BuildService -> ClientComm:BuildObject); `.Client` is the
+-- SERVER idiom and is nil there. Indexing it threw inside KnitInit,
+-- init.client.lua's :catch(warn) swallowed the boot promise, so KnitStart never
+-- ran: no FetchMatchState snapshot and no 5 s ReportActive keepalive — which is
+-- also why an idle player was demoted to spectator after 60 s (Q2-1, Q4-3).
+
+-- The UI event contract (README / alpha-ui-spec): every signal the controller
+-- must re-emit on the EventBus.
+local CLIENT_SIGNAL_NAMES = {
+	{ "Match", "PhaseChanged" },
+	{ "Match", "PlayerJoined" },
+	{ "Match", "PlayerLeft" },
+	{ "Match", "MatchStarted" },
+	{ "Match", "BuyPhaseStarted" },
+	{ "Match", "BuyPhaseEnded" },
+	{ "Match", "RoundStarted" },
+	{ "Match", "RoundEnded" },
+	{ "Match", "ScoreUpdated" },
+	{ "Match", "MatchEnded" },
+	{ "Match", "PlayerEliminated" },
+	{ "Match", "PlayerDemotedToSpectator" },
+	{ "Match", "RematchVoteUpdated" },
+	{ "Economy", "CreditsChanged" },
+	{ "Combat", "HitConfirmed" },
+}
+
+test("the client tree boots: every controller's KnitInit resolves", function()
+	local client = H.bootClient({ server = { preJoinPlayers = 1 } })
+	check(client.bootOk, "init.client.lua failed to run: " .. tostring(client.bootErr))
+	check(client.initError == nil, "a controller's KnitInit errored: " .. tostring(client.initError))
+
+	-- The negative control that makes the case meaningful: the client service
+	-- object has NO `.Client` field — indexing it is the defect itself.
+	local reflected = client.knit.GetService("Match")
+	eq(reflected.Client, nil, "the client service carries its signals directly, with no .Client proxy")
+	eq(type(reflected.PhaseChanged.Connect), "function", "PhaseChanged is a signal on the service object")
+	eq(type(reflected.FetchMatchState.InvokeAsync), "function", "remote methods are invokable on it")
+end)
+
+test("the controller subscribes to every service signal through the client idiom", function()
+	local seen = {}
+	local client = H.bootClient({
+		server = { preJoinPlayers = 1 },
+		beforeFlush = function(self)
+			for _, entry in CLIENT_SIGNAL_NAMES do
+				seen[entry[2]] = 0
+				self.eventBus.Subscribe(entry[2], function()
+					seen[entry[2]] += 1
+				end)
+			end
+		end,
+	})
+	check(client.initError == nil, "KnitInit errored, so nothing was subscribed: " .. tostring(client.initError))
+
+	-- Fire each signal from the SERVER, the way the game does.
+	for _, entry in CLIENT_SIGNAL_NAMES do
+		H.service(entry[1]).Client[entry[2]]:Fire({ event = entry[2] })
+	end
+	H.flush()
+
+	for _, entry in CLIENT_SIGNAL_NAMES do
+		eq(seen[entry[2]], 1, entry[1] .. "." .. entry[2] .. " must reach the EventBus exactly once")
+	end
+end)
+
+test("KnitStart runs: the snapshot is fetched and the 5 s keepalive reports active", function()
+	local snapshot = nil
+	local client = H.bootClient({
+		server = { preJoinPlayers = 1 },
+		beforeFlush = function(self)
+			self.eventBus.Subscribe("MatchSnapshot", function(payload)
+				snapshot = payload
+			end)
+		end,
+	})
+	check(client.initError == nil, "KnitInit errored, so KnitStart never ran: " .. tostring(client.initError))
+	check(snapshot ~= nil, "no MatchSnapshot: the controller's KnitStart never ran")
+	eq(snapshot.phase, Enums.Phase.Lobby, "the snapshot is the server's authoritative state")
+	eq(snapshot.round, 0, "round")
+	deepEq(snapshot.teams.Raiders, { 101 }, "and it carries this player's own seat")
+
+	-- The keepalive: `while true do task.wait(5)` -> Match:ReportActive, which
+	-- resets the server's AFK timer (that is the Q4-3 fix).
+	local before = #client.calls
+	H.wakeParked()
+	local called = false
+	for index = before + 1, #client.calls do
+		if client.calls[index] == "Match:ReportActive" then
+			called = true
+		end
+	end
+	check(called, "the keepalive never called Match:ReportActive (calls: " .. table.concat(client.calls, ", ") .. ")")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
 	for _, failure in failed do
