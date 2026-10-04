@@ -1230,6 +1230,58 @@ test("KnitStart runs: the snapshot is fetched and the 5 s keepalive reports acti
 end)
 
 -- ==========================================================================
+section("P2B — round start state, match #2 included")
+-- ==========================================================================
+
+-- MatchEnded wipes the health registry AND the ledger match-scoped (§5.3) and
+-- the FSM returns to LOBBY, so re-registering only on RoundEnded left round 1
+-- of match #2 with no live entries: every shot came back DEAD
+-- (CombatService:168-170), and with no re-issued free sidearm it also came back
+-- NOT_OWNED while every balance was 0 (Q4-5). The round-start hook now runs on
+-- the phase a round actually begins in.
+
+test("match #2 round 1 is live: every seat has health and a shootable loadout", function()
+	local ctx = freshAction()
+	local match = H.service("Match")
+	local economy = H.service("Economy")
+	local playerState = H.service("PlayerState")
+
+	playRounds(ctx.wardens, Constants.WinScore) -- the raiders take the match
+	H.flush()
+	eq(match:GetPhase(), Enums.Phase.Lobby, "match #1 is over")
+	eq(playerState:GetHealth(101), nil, "MatchEnded wipes the health registry (§5.3)")
+	eq(H.count(economy.Client.Credits:Get()), 0, "and the credits (§5.3)")
+
+	for _, player in ctx.players do
+		match.Client:RequestRematchVote(player)
+	end
+	H.flush()
+	eq(H.snapshot().phase, Enums.Phase.BuyPhase, "match #2 round 1 starts in the buy phase")
+
+	-- The seat state the round needs: a live entry for every rostered player...
+	for id = 101, 110 do
+		eq(playerState:IsAlive(id), true, ("player %d has a live entry for match #2 round 1"):format(id))
+		eq(playerState:GetHealth(id), Constants.MaxHealth, ("player %d is at full health"):format(id))
+	end
+	-- ...and the free loadout §5.3 issues every round (credits are 0 here, so
+	-- without it nobody could shoot at all).
+	eq(economy:GetLoadout(101).sidearm, "Viper9", "the free sidearm is re-issued for match #2")
+
+	-- And the whole chain works: a warden shoots a raider in match #2 round 1.
+	H.advance(Constants.BuyPhaseDuration)
+	eq(H.snapshot().phase, Enums.Phase.Action, "match #2 round 1 is in action")
+	H.setCharacter(106, 0, 3, 0)
+	H.setCharacter(101, 0, 3, -30)
+	H.advance(0)
+	local hpBefore = playerState:GetHealth(101)
+	local shot = H.fire(106, "Viper9", { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+	eq(shot.ok, true, "the shot is accepted (not DEAD / NOT_OWNED): " .. tostring(shot.reason))
+	check(shot.hit ~= nil, "and it lands: " .. tostring(shot.reason))
+	eq(shot.hit.id, 101, "on the raider")
+	check(playerState:GetHealth(101) < hpBefore, "damage is applied through the health authority")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
 	for _, failure in failed do

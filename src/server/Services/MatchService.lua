@@ -113,9 +113,14 @@ function MatchService:KnitStart()
 		end
 	end
 
-	-- Round settlement (§5): award win/loss credits, reset rentals + health.
+	-- Round settlement (§5): award win/loss credits + reset rentals.
 	sm:Connect(Shared.Enums.Event.RoundEnded, function(data)
 		self:_SettleRound(data)
+	end)
+	-- Round START state (health + free loadout) is applied on the phase a round
+	-- actually begins in — BUY_PHASE — not on RoundEnded. See _BeginRound.
+	sm:Connect(Shared.Enums.Event.BuyPhaseStarted, function()
+		self:_BeginRound()
 	end)
 	-- Match end: clear credits + health across the board (§5.3).
 	sm:Connect(Shared.Enums.Event.MatchEnded, function()
@@ -234,13 +239,40 @@ end
 
 function MatchService:_SettleRound(data)
 	local economy = Knit.GetService("Economy")
-	local playerState = Knit.GetService("PlayerState")
 	for _, player in Players:GetPlayers() do
 		local team = sm:GetPlayerTeam(player.UserId)
 		if team ~= nil then
 			-- §5.1: round win +3000 / round loss +1500 (flat; no scaling in MVP)
 			economy:SettleRoundForPlayer(player.UserId, team, data.winnerTeam)
-			-- §5.3 rental reset + §7.3 heal for the NEXT round.
+			-- §5.3 rental reset: re-buy each buy phase.
+			economy:ResetRentals(player.UserId)
+		end
+	end
+end
+
+--[[
+    Apply the state every round must START from, for every seated player:
+    §5.3 rentals reset (which re-issues the free sidearm + melee) and a live
+    health entry at full health with the ledger's armor.
+
+    WHY THE BUY PHASE, not RoundEnded (Q4-5): `MatchEnded` wipes both the health
+    registry and the ledger match-scoped (§5.3) and the FSM goes back to LOBBY.
+    RoundEnded-time registration therefore could not survive match #2: the wipe
+    happened *after* it (listeners run through task.spawn, so the order was
+    never guaranteed either), leaving round 1 of the next match with
+      * no live health entries at all -> every shot answered DEAD
+        (CombatService:168-170), and
+      * no issued free loadout -> every shot answered NOT_OWNED, with 0 credits
+        because §5.3 resets credits at match end.
+    BuyPhaseStarted is the phase a round actually begins from, and it fires for
+    round 1 of every match, so one hook covers match #1 and every match after it.
+]]
+function MatchService:_BeginRound()
+	local economy = Knit.GetService("Economy")
+	local playerState = Knit.GetService("PlayerState")
+	for _, player in Players:GetPlayers() do
+		local team = sm:GetPlayerTeam(player.UserId)
+		if team ~= nil then
 			economy:ResetRentals(player.UserId)
 			playerState:RegisterForRound(player.UserId, team)
 		end
