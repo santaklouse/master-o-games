@@ -1,0 +1,4661 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Item class="Folder" referent="RBX0">
+		<Properties>
+			<string name="Name">MeridianDocks</string>
+		</Properties>
+	<Item class="Folder" referent="RBX39">
+		<Properties>
+			<string name="Name">Structure</string>
+		</Properties>
+	<Item class="Part" referent="RBX1">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4283059278</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>-2</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1376</token>
+			<string name="Name">MD_GroundSlab</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>236</X>
+				<Y>4</Y>
+				<Z>220</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX2">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>6</Y>
+				<Z>-104</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallN</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>224</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX3">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>6</Y>
+				<Z>104</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallS</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>224</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX4">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-112</X>
+				<Y>6</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>208</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX5">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>112</X>
+				<Y>6</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_PerimeterWallE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>208</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX6">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-105</X>
+				<Y>6</Y>
+				<Z>-78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_MusterDeckFrontWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>10</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX7">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-47</X>
+				<Y>6</Y>
+				<Z>-78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_MusterDeckFrontWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>66</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX8">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>47</X>
+				<Y>6</Y>
+				<Z>-78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_MusterDeckFrontWallC</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>66</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX9">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>105</X>
+				<Y>6</Y>
+				<Z>-78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_MusterDeckFrontWallD</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>10</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX10">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-105</X>
+				<Y>6</Y>
+				<Z>78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_YardHouseFrontWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>10</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX11">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-47</X>
+				<Y>6</Y>
+				<Z>78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_YardHouseFrontWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>66</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX12">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>47</X>
+				<Y>6</Y>
+				<Z>78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_YardHouseFrontWallC</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>66</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX13">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>105</X>
+				<Y>6</Y>
+				<Z>78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_YardHouseFrontWallD</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>10</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX14">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-65</X>
+				<Y>6</Y>
+				<Z>-61</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_GangwayInnerWall</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>34</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX15">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>65</X>
+				<Y>6</Y>
+				<Z>-61</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_BoomRowInnerWall</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>34</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX16">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-54</X>
+				<Y>6</Y>
+				<Z>-26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteANorthWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX17">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-30</X>
+				<Y>6</Y>
+				<Z>-26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteANorthWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX18">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-42</X>
+				<Y>6</Y>
+				<Z>26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteASouthWall</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>36</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX19">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-60</X>
+				<Y>6</Y>
+				<Z>-10</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteAWestWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>32</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX20">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-60</X>
+				<Y>6</Y>
+				<Z>22</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteAWestWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>8</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX21">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-24</X>
+				<Y>6</Y>
+				<Z>-15</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteAEastWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>22</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX22">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-24</X>
+				<Y>6</Y>
+				<Z>17</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteAEastWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>18</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX23">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>54</X>
+				<Y>6</Y>
+				<Z>-26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteBNorthWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX24">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>30</X>
+				<Y>6</Y>
+				<Z>-26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteBNorthWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX25">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>42</X>
+				<Y>6</Y>
+				<Z>26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteBSouthWall</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>36</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX26">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>24</X>
+				<Y>6</Y>
+				<Z>-15</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteBWestWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>22</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX27">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>24</X>
+				<Y>6</Y>
+				<Z>17</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteBWestWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>18</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX28">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>60</X>
+				<Y>6</Y>
+				<Z>-10</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteBEastWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>32</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX29">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>60</X>
+				<Y>6</Y>
+				<Z>22</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SiteBEastWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>8</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX30">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-16</X>
+				<Y>6</Y>
+				<Z>40</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SouthDepotNorthWallA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>20</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX31">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>16</X>
+				<Y>6</Y>
+				<Z>40</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SouthDepotNorthWallB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>20</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX32">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>6</Y>
+				<Z>70</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SouthDepotSouthWall</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>52</X>
+				<Y>12</Y>
+				<Z>4</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX33">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-26</X>
+				<Y>6</Y>
+				<Z>55</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SouthDepotWestWall</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>30</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX34">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>26</X>
+				<Y>6</Y>
+				<Z>55</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SouthDepotEastWall</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>12</Y>
+				<Z>30</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX35">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">true</bool>
+			<Color3uint8 name="Color3uint8">4283848282</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>12.500000</Y>
+				<Z>55</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SouthDepotRoof</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>56</X>
+				<Y>1</Y>
+				<Z>34</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX36">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-42</X>
+				<Y>5</Y>
+				<Z>-61</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_NorthWorksWestBlock</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>10</Y>
+				<Z>18</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX37">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4285427314</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>42</X>
+				<Y>5</Y>
+				<Z>-61</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_NorthWorksEastBlock</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>10</Y>
+				<Z>18</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX38">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286599731</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>4.500000</Y>
+				<Z>-44</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1040</token>
+			<string name="Name">MD_SpillwayTower</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>40</X>
+				<Y>9</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	</Item>
+	<Item class="Folder" referent="RBX79">
+		<Properties>
+			<string name="Name">Cover</string>
+		</Properties>
+	<Item class="Part" referent="RBX40">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-96</X>
+				<Y>3</Y>
+				<Z>-58</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_GangwayBlocker1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX41">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-79</X>
+				<Y>3</Y>
+				<Z>-34</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_GangwayBlocker2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX42">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-96</X>
+				<Y>3</Y>
+				<Z>10</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_GangwayBlocker3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX43">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-79</X>
+				<Y>3</Y>
+				<Z>34</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_GangwayBlocker4</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX44">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-96</X>
+				<Y>3</Y>
+				<Z>58</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_GangwayBlocker5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX45">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>96</X>
+				<Y>3</Y>
+				<Z>-58</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_BoomRowBlocker1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX46">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>79</X>
+				<Y>3</Y>
+				<Z>-34</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_BoomRowBlocker2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX47">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>96</X>
+				<Y>3</Y>
+				<Z>10</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_BoomRowBlocker3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX48">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>79</X>
+				<Y>3</Y>
+				<Z>34</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_BoomRowBlocker4</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX49">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>96</X>
+				<Y>3</Y>
+				<Z>58</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_BoomRowBlocker5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>28</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX50">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-46</X>
+				<Y>4.500000</Y>
+				<Z>-44</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_BridgePylonW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>9</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX51">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>46</X>
+				<Y>4.500000</Y>
+				<Z>-44</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_BridgePylonE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>9</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX52">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278214756</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-12</X>
+				<Y>3</Y>
+				<Z>-66</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_StagingBoxA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>18</X>
+				<Y>6</Y>
+				<Z>10</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX53">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4288035880</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>14</X>
+				<Y>3</Y>
+				<Z>-56</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_StagingBoxB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>18</X>
+				<Y>6</Y>
+				<Z>10</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX54">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284638270</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>3</Y>
+				<Z>-37</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_StagingBoxC</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX55">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4288035880</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>3</Y>
+				<Z>-6</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_MidCrossBox</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX56">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4283848796</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-12</X>
+				<Y>2</Y>
+				<Z>10</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">800</token>
+			<string name="Name">MD_MidCrossCrateW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>4</Y>
+				<Z>10</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX57">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4283848796</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>12</X>
+				<Y>2</Y>
+				<Z>10</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">800</token>
+			<string name="Name">MD_MidCrossCrateE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>4</Y>
+				<Z>10</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX58">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284638270</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>3</Y>
+				<Z>30</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_CausewaySouthBlocker</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX59">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278214756</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-46</X>
+				<Y>3</Y>
+				<Z>52</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_PlazaCoverW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>16</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX60">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278214756</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>46</X>
+				<Y>3</Y>
+				<Z>52</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_PlazaCoverE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>16</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX61">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4288035880</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-52</X>
+				<Y>3</Y>
+				<Z>-16</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteACover1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>6</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX62">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284638270</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-34</X>
+				<Y>3</Y>
+				<Z>-14</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteACover2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX63">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278214756</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-52</X>
+				<Y>3</Y>
+				<Z>14</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteACover3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX64">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-34</X>
+				<Y>5</Y>
+				<Z>16</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteACoverBoost</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>9</Y>
+				<Z>10</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX65">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4283848796</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-44</X>
+				<Y>2</Y>
+				<Z>2</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">800</token>
+			<string name="Name">MD_SiteACover4</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>8</X>
+				<Y>4</Y>
+				<Z>8</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX66">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4283848796</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-30</X>
+				<Y>2</Y>
+				<Z>4</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">800</token>
+			<string name="Name">MD_SiteACover5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>6</X>
+				<Y>4</Y>
+				<Z>6</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX67">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286599731</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>36</X>
+				<Y>6</Y>
+				<Z>-16</Z>
+				<R00>0.000000</R00>
+				<R01>-1</R01>
+				<R02>0</R02>
+				<R10>1</R10>
+				<R11>0.000000</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1040</token>
+			<string name="Name">MD_SiteBPillarW</string>
+			<token name="shape">2</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>5</Y>
+				<Z>5</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX68">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286599731</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>52</X>
+				<Y>6</Y>
+				<Z>-14</Z>
+				<R00>0.000000</R00>
+				<R01>-1</R01>
+				<R02>0</R02>
+				<R10>1</R10>
+				<R11>0.000000</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1040</token>
+			<string name="Name">MD_SiteBPillarE</string>
+			<token name="shape">2</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>5</Y>
+				<Z>5</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX69">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284638270</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>44</X>
+				<Y>3</Y>
+				<Z>14</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteBContainer</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>18</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX70">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278214756</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>34</X>
+				<Y>3</Y>
+				<Z>4</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteBCrateA</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>10</X>
+				<Y>6</Y>
+				<Z>10</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX71">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278214756</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>56</X>
+				<Y>3</Y>
+				<Z>4</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteBCrateB</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>6</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX72">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284638270</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>44</X>
+				<Y>6</Y>
+				<Z>20</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_SiteBStack</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>12</Y>
+				<Z>10</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX73">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-72</X>
+				<Y>4</Y>
+				<Z>-90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_LockerRowN1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>8</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX74">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>4</Y>
+				<Z>-90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_LockerRowN2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>8</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX75">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>72</X>
+				<Y>4</Y>
+				<Z>-90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_LockerRowN3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>8</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX76">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-72</X>
+				<Y>4</Y>
+				<Z>90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_LockerRowS1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>8</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX77">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>4</Y>
+				<Z>90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_LockerRowS2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>8</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX78">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>72</X>
+				<Y>4</Y>
+				<Z>90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_LockerRowS3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>24</X>
+				<Y>8</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	</Item>
+	<Item class="Folder" referent="RBX160">
+		<Properties>
+			<string name="Name">Markers</string>
+		</Properties>
+	<Item class="Part" referent="RBX80">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-42</X>
+				<Y>0.110000</Y>
+				<Z>0</Z>
+				<R00>0.000000</R00>
+				<R01>-1</R01>
+				<R02>0</R02>
+				<R10>1</R10>
+				<R11>0.000000</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_Pad_PortBay</string>
+			<token name="shape">2</token>
+			<Vector3 name="size">
+				<X>0.200000</X>
+				<Y>12</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX81">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-42</X>
+				<Y>0.150000</Y>
+				<Z>-6</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_PortBayKerbN</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>0.300000</Y>
+				<Z>0.400000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX82">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-42</X>
+				<Y>0.150000</Y>
+				<Z>6</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_PortBayKerbS</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>0.300000</Y>
+				<Z>0.400000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX83">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-48</X>
+				<Y>0.150000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_PortBayKerbW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.400000</X>
+				<Y>0.300000</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX84">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-36</X>
+				<Y>0.150000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_PortBayKerbE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.400000</X>
+				<Y>0.300000</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX85">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4291320575</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>42</X>
+				<Y>0.110000</Y>
+				<Z>0</Z>
+				<R00>0.000000</R00>
+				<R01>-1</R01>
+				<R02>0</R02>
+				<R10>1</R10>
+				<R11>0.000000</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_Pad_ReactorDeck</string>
+			<token name="shape">2</token>
+			<Vector3 name="size">
+				<X>0.200000</X>
+				<Y>12</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX86">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>42</X>
+				<Y>0.150000</Y>
+				<Z>-6</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_ReactorDeckKerbN</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>0.300000</Y>
+				<Z>0.400000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX87">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>42</X>
+				<Y>0.150000</Y>
+				<Z>6</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_ReactorDeckKerbS</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>0.300000</Y>
+				<Z>0.400000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX88">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>36</X>
+				<Y>0.150000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_ReactorDeckKerbW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.400000</X>
+				<Y>0.300000</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX89">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4278255530</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>48</X>
+				<Y>0.150000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_Pad_ReactorDeckKerbE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.400000</X>
+				<Y>0.300000</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX90">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4293980400</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.110000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_CausewayCentreLine</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>4</X>
+				<Y>0.200000</Y>
+				<Z>152</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX91">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.110000</Y>
+				<Z>-43</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_HazardStripeN</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>220</X>
+				<Y>0.200000</Y>
+				<Z>2</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX92">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.110000</Y>
+				<Z>-31</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_HazardStripeS</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>220</X>
+				<Y>0.200000</Y>
+				<Z>2</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX93">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4291325480</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.110000</Y>
+				<Z>-90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_MusterDeckPad</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>68</X>
+				<Y>0.200000</Y>
+				<Z>20</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX94">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4280842430</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>0.110000</Y>
+				<Z>90</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_YardHousePad</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>68</X>
+				<Y>0.200000</Y>
+				<Z>20</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX95">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4291325480</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-34</X>
+				<Y>7</Y>
+				<Z>-96</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_SpawnColumn_NW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>14</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX96">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4291325480</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>34</X>
+				<Y>7</Y>
+				<Z>-96</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_SpawnColumn_NE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>14</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX97">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4280842430</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-34</X>
+				<Y>7</Y>
+				<Z>96</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_SpawnColumn_SW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>14</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX98">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4280842430</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>34</X>
+				<Y>7</Y>
+				<Z>96</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_SpawnColumn_SE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>14</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX99">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-90</X>
+				<Y>11.500000</Y>
+				<Z>-78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_MusterDeckW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>22</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX100">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>11.500000</Y>
+				<Z>-78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_MusterDeckMid</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>30</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX101">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>90</X>
+				<Y>11.500000</Y>
+				<Z>-78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_MusterDeckE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>22</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX102">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-90</X>
+				<Y>11.500000</Y>
+				<Z>78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_YardHouseW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>22</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX103">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>11.500000</Y>
+				<Z>78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_YardHouseMid</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>30</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX104">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>90</X>
+				<Y>11.500000</Y>
+				<Z>78</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_YardHouseE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>22</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX105">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-42</X>
+				<Y>11.500000</Y>
+				<Z>-26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_SiteANorth</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX106">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-60</X>
+				<Y>11.500000</Y>
+				<Z>12</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_SiteAWest</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>1</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX107">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-24</X>
+				<Y>11.500000</Y>
+				<Z>2</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_SiteAEast</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>1</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX108">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>42</X>
+				<Y>11.500000</Y>
+				<Z>-26</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_SiteBNorth</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX109">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>24</X>
+				<Y>11.500000</Y>
+				<Z>2</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_SiteBWest</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>1</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX110">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>60</X>
+				<Y>11.500000</Y>
+				<Z>12</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_SiteBEast</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>1</Y>
+				<Z>14</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX111">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>0</X>
+				<Y>11.500000</Y>
+				<Z>40</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_SouthDepotNorth</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>14</X>
+				<Y>1</Y>
+				<Z>1</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX112">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-65</X>
+				<Y>11.500000</Y>
+				<Z>-37</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_TideBridgeW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>1</Y>
+				<Z>18</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX113">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4294956288</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>65</X>
+				<Y>11.500000</Y>
+				<Z>-37</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">288</token>
+			<string name="Name">MD_DoorLintel_TideBridgeE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>1</X>
+				<Y>1</Y>
+				<Z>18</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX114">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>0.300000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_LaneKerb_-63_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>2</X>
+				<Y>0.600000</Y>
+				<Z>150</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX115">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>0.300000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_LaneKerb_63_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>2</X>
+				<Y>0.600000</Y>
+				<Z>150</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX116">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>0.300000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SpawnKerb_-111_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>2</X>
+				<Y>0.600000</Y>
+				<Z>150</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX117">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4284702562</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>0.300000</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">816</token>
+			<string name="Name">MD_SpawnKerb_111_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>2</X>
+				<Y>0.600000</Y>
+				<Z>150</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX118">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-70</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_0</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX119">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-54.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX120">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-39</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX121">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-23.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX122">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-8</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_4</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX123">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>7.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX124">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>23</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_6</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX125">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>38.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_7</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX126">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>54</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_8</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX127">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-63.500000</X>
+				<Y>1.500000</Y>
+				<Z>69.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_W_9</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX128">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-70</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_0</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX129">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-54.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX130">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-39</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX131">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-23.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX132">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>-8</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_4</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX133">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>7.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX134">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>23</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_6</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX135">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>38.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_7</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX136">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>54</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_8</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX137">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>63.500000</X>
+				<Y>1.500000</Y>
+				<Z>69.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_E_9</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX138">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-70</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_0</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX139">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-54.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX140">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-39</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX141">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-23.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX142">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-8</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_4</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX143">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>7.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX144">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>23</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_6</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX145">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>38.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_7</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX146">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>54</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_8</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX147">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-111.500000</X>
+				<Y>1.500000</Y>
+				<Z>69.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SW_9</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX148">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-70</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_0</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX149">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-54.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_1</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX150">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-39</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_2</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX151">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-23.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_3</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX152">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>-8</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_4</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX153">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>7.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_5</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX154">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>23</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_6</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX155">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>38.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_7</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX156">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>54</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_8</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX157">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286350218</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>111.500000</X>
+				<Y>1.500000</Y>
+				<Z>69.500000</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1088</token>
+			<string name="Name">MD_RailingPost_SE_9</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.600000</X>
+				<Y>3</Y>
+				<Z>0.600000</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX158">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286599731</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>-110</X>
+				<Y>11</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1040</token>
+			<string name="Name">MD_OverheadPipeW</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.800000</X>
+				<Y>0.800000</Y>
+				<Z>200</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="Part" referent="RBX159">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<bool name="CastShadow">false</bool>
+			<Color3uint8 name="Color3uint8">4286599731</Color3uint8>
+			<CoordinateFrame name="CFrame">
+				<X>110</X>
+				<Y>11</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<token name="Material">1040</token>
+			<string name="Name">MD_OverheadPipeE</string>
+			<token name="shape">1</token>
+			<Vector3 name="size">
+				<X>0.800000</X>
+				<Y>0.800000</Y>
+				<Z>200</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	</Item>
+	<Item class="Folder" referent="RBX164">
+		<Properties>
+			<string name="Name">Spawns</string>
+		</Properties>
+	<Item class="SpawnLocation" referent="RBX161">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<CoordinateFrame name="CFrame">
+				<X>-36</X>
+				<Y>0.500000</Y>
+				<Z>-88</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<bool name="Enabled">true</bool>
+			<string name="Name">Spawn_Raiders</string>
+			<bool name="Neutral">true</bool>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>1</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="SpawnLocation" referent="RBX162">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<CoordinateFrame name="CFrame">
+				<X>36</X>
+				<Y>0.500000</Y>
+				<Z>-88</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<bool name="Enabled">true</bool>
+			<string name="Name">Spawn_Practice</string>
+			<bool name="Neutral">true</bool>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>1</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	<Item class="SpawnLocation" referent="RBX163">
+		<Properties>
+			<bool name="Anchored">true</bool>
+			<CoordinateFrame name="CFrame">
+				<X>36</X>
+				<Y>0.500000</Y>
+				<Z>88</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<bool name="Enabled">true</bool>
+			<string name="Name">Spawn_Wardens</string>
+			<bool name="Neutral">true</bool>
+			<Vector3 name="size">
+				<X>12</X>
+				<Y>1</Y>
+				<Z>12</Z>
+			</Vector3>
+		</Properties>
+	</Item>
+	</Item>
+	</Item>
+</roblox>
