@@ -57,6 +57,33 @@ local sm = MatchStateMachine.new({
 -- AFK kick bookkeeping (GDD §4: 60 s idle in buy phase / lobby -> spectator)
 local lastActive = {} -- playerId -> os.clock()
 
+-- Every player id this service has already seated (Q1-4 join race).
+local seated = {}
+
+--[[
+    The ONE join path. Knit `task.spawn`s every service's KnitStart after all
+    KnitInit calls resolve (packages/knit/src/KnitServer.lua:445-454), so a
+    player can already be in the game — Studio Play's local player always is —
+    before the PlayerAdded connect below exists. That player used to get no
+    seat, no ledger entry and no health entry: he could not buy, could not be
+    credited and could not be shot. The catch-up loop in KnitStart therefore
+    calls THIS function for everyone already present, so an early joiner and a
+    late joiner take identically the same path. `seated` makes it idempotent.
+]]
+local function seatPlayer(player)
+	if seated[player.UserId] then
+		return
+	end
+	seated[player.UserId] = true
+	lastActive[player.UserId] = os.clock()
+	local result = sm:JoinPlayer(player.UserId)
+	-- Initialize economy + health for the player's role.
+	Knit.GetService("Economy"):InitPlayer(player.UserId)
+	if result.role ~= Shared.Enums.Role.Spectator and result.role ~= Shared.Enums.Role.Waitlist then
+		Knit.GetService("PlayerState"):RegisterForRound(player.UserId, result.team)
+	end
+end
+
 -- Knit signal markers are placeholders until Knit.Start binds remotes; only
 -- these named Client signals are wired to state-machine events.
 local CLIENT_SIGNALS = {
@@ -98,17 +125,14 @@ function MatchService:KnitStart()
 		playerState:ResetAllForNewMatch()
 	end)
 
-	-- Player lifecycle
-	Players.PlayerAdded:Connect(function(player)
-		lastActive[player.UserId] = os.clock()
-		local result = sm:JoinPlayer(player.UserId)
-		-- Initialize economy + health for the player's role.
-		Knit.GetService("Economy"):InitPlayer(player.UserId)
-		if result.role ~= Shared.Enums.Role.Spectator and result.role ~= Shared.Enums.Role.Waitlist then
-			Knit.GetService("PlayerState"):RegisterForRound(player.UserId, result.team)
-		end
-	end)
+	-- Player lifecycle: connect first, then seat everyone already here (the
+	-- local player in Studio Play is always already here — Q1-4).
+	Players.PlayerAdded:Connect(seatPlayer)
+	for _, player in Players:GetPlayers() do
+		seatPlayer(player)
+	end
 	Players.PlayerRemoving:Connect(function(player)
+		seated[player.UserId] = nil
 		sm:LeavePlayer(player.UserId)
 		lastActive[player.UserId] = nil
 		Knit.GetService("Economy"):CleanupPlayer(player.UserId)

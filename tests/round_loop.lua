@@ -1053,6 +1053,84 @@ test("a team emptied during the buy phase does not inherit its last alive count"
 end)
 
 -- ==========================================================================
+section("P2B — join race: a player already in the game when KnitStart runs")
+-- ==========================================================================
+
+-- Knit task.spawns every service's KnitStart after all KnitInit calls resolve
+-- (KnitServer.lua:445-454), so in Studio Play the local player is already in
+-- Players:GetPlayers() when MatchService connects PlayerAdded. Without the
+-- catch-up loop that player was never seated: no roster entry, no ledger, no
+-- health -> he could not buy, could not be credited and could not be shot
+-- (gdd/spawn-and-boot-audit.md Q1-4). `preJoinPlayers` models exactly that.
+
+test("an early joiner is seated, ledger-registered and registered for the round", function()
+	-- Six early joiners so the slate covers both teams (slots fill Raiders
+	-- first, so 101-105 are Raiders and 106 is the first Warden).
+	local ok, err = H.boot({ preJoinPlayers = 6 })
+	check(ok, "server boot failed: " .. tostring(err))
+	local match = H.service("Match")
+	local economy = H.service("Economy")
+	local playerState = H.service("PlayerState")
+
+	-- Seat: the roster entry every later system keys off.
+	eq(match:GetPlayerTeam(101), Constants.Teams.Raiders, "first early joiner holds a raider seat")
+	eq(match:GetPlayerRole(101), Enums.Role.Raider, "role")
+	eq(match:GetPlayerTeam(106), Constants.Teams.Wardens, "sixth early joiner holds a warden seat")
+	eq(match:GetPlayerRole(106), Enums.Role.Warden, "role")
+
+	-- Ledger: he can be credited and he can buy.
+	eq(economy:GetBalance(101), 0, "ledger entry exists (pistol round starts at 0 credits)")
+	eq(economy:GetLoadout(101).sidearm, "Viper9", "free sidearm issued to an early joiner")
+	local balances = economy.Client.Credits:Get()
+	eq(H.count(balances), 6, "the credits property carries every early joiner")
+
+	-- Health: he can be shot.
+	eq(playerState:IsAlive(101), true, "health entry registered: the early joiner is shootable")
+	eq(playerState:GetHealth(101), Constants.MaxHealth, "full health")
+
+	local snapshot = H.snapshot()
+	eq(H.count(snapshot.teams.Raiders), 5, "snapshot roster carries the early joiners")
+	eq(H.count(snapshot.teams.Wardens), 1, "and the one warden")
+	eq(snapshot.phase, Enums.Phase.Lobby, "six of ten players: the lobby is still filling")
+end)
+
+test("every player is seated exactly once, early or late", function()
+	H.boot({ preJoinPlayers = 1 })
+	H.players:Add(102) -- a late joiner through the real PlayerAdded path
+	H.flush()
+	local balances = H.service("Economy").Client.Credits:Get()
+	eq(H.count(balances), 2, "one ledger entry per player")
+	eq(H.service("Match"):GetPlayerTeam(101), Constants.Teams.Raiders, "early joiner's seat")
+	eq(H.service("Match"):GetPlayerTeam(102), Constants.Teams.Raiders, "late joiner's seat")
+	eq(H.service("PlayerState"):IsAlive(101), true, "early joiner alive")
+	eq(H.service("PlayerState"):IsAlive(102), true, "late joiner alive")
+end)
+
+test("the early joiner is a live target: a shot on him resolves as a hit, not DEAD", function()
+	H.boot({ preJoinPlayers = 1 })
+	H.joinPlayers(102, 9) -- nine later joiners fill the lobby -> the match starts
+	H.advance(Constants.BuyPhaseDuration)
+	local match = H.service("Match")
+	eq(match:IsActionPhase(), true, "the match starts with the early joiner in it")
+	eq(match:GetPlayerTeam(101), Constants.Teams.Raiders, "the early joiner's seat survives the fill")
+	eq(match:GetPlayerTeam(106), Constants.Teams.Wardens, "warden 106 is the shooter (no friendly fire)")
+
+	-- The 30-stud lane the cover cases use: warden 106 shoots down -Z at the
+	-- early-joining raider 101 at the far end.
+	H.setCharacter(106, 0, 3, 0)
+	H.setCharacter(101, 0, 3, -30)
+	H.advance(0)
+	local hpBefore = H.service("PlayerState"):GetHealth(101)
+	local shot = H.fire(106, "Viper9", { x = 0, y = TORSO_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+
+	eq(shot.ok, true, "the shot is legal (not refused for a dead/unknown shooter)")
+	check(shot.hit ~= nil, "the shot must land on the early joiner: " .. tostring(shot.reason))
+	eq(shot.hit.id, 101, "the early joiner is the one who took the hit")
+	eq(shot.hit.region, Enums.HitRegion.Torso, "torso band")
+	check(H.service("PlayerState"):GetHealth(101) < hpBefore, "damage went through the health authority")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
 	for _, failure in failed do

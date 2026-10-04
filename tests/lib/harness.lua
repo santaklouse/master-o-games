@@ -623,13 +623,23 @@ end
 
 -- Boot the real server tree: src/server/init.server.lua through
 -- Knit.AddServices(script.Services) + Knit.Start(), the same path Roblox runs.
-function H.boot()
+--
+-- options.preJoinPlayers = N seats N players in the fake Players list BEFORE
+-- the server chunk runs, i.e. before any service exists to hear PlayerAdded.
+-- Those players are therefore in Players:GetPlayers() when Knit's
+-- task.spawn'ed KnitStart connects its handler — exactly what Studio Play's
+-- local player is (Q1-4 join race). options.firstUserId defaults to 101.
+function H.boot(options)
+	options = options or {}
 	ready = {}
 	parked = {}
 	lastError = nil
 	cache = {}
 	H.clock.t = 0
 	H.players = newPlayers()
+	for index = 1, (options.preJoinPlayers or 0) do
+		H.players:Add((options.firstUserId or 101) + index - 1)
+	end
 	H.knit = newKnit()
 	H.workspace = newWorkspace()
 	H.runService = {
