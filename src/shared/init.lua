@@ -18,6 +18,11 @@ Shared.Weapons = require(script.Config.Weapons)
 Shared.Economy = require(script.Config.Economy)
 Shared.Combat = require(script.Config.Combat)
 
+-- Hitbox geometry (A3a): the ONE place that says where a body is, in the
+-- torso-centre frame the combat recorder writes. CombatService injects it into
+-- HitDetectionCore, which has no default profile on purpose (Q1-3).
+Shared.RigProfile = require(script.Config.RigProfile)
+
 -- Run numbers: the GDD baseline (Constants) with the Alpha overlay applied.
 -- Services construct logic modules with Shared.RunConfig, never with a
 -- scattered constant, so flipping AlphaRun.Enabled flips the whole run.
