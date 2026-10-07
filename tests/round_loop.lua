@@ -1373,6 +1373,360 @@ test("the server plays the Alpha run: 2v2 from four players, decided at 3 rounds
 end)
 
 -- ==========================================================================
+section("A3a — the hit frame (RigProfile, torso-centre recording)")
+-- ==========================================================================
+
+-- Q1-3 (gdd/spawn-and-boot-audit.md): the recorder writes the character PIVOT
+-- (the root part centre = the torso centre, ~3 studs above the feet) while the
+-- old RegionDefaults placed the head 3.0 studs ABOVE that point — a phantom
+-- head ~6 studs up. Chest shots hit nothing; "headshots" aimed at the sky.
+-- One rig profile now owns every offset, in the frame the recorder writes.
+
+test("the rig profile is torso-centre-relative and every region is a live enum", function()
+    local RigProfile = H.Shared.RigProfile
+    local R6 = RigProfile.R6
+    check(type(R6) == "table" and type(R6.regions) == "table", "R6 profile present")
+
+    -- Every region key must be a real Enums.HitRegion value, or a hit could be
+    -- resolved against a band the damage model has never heard of.
+    local known = {}
+    for _, region in Enums.HitRegion do
+        known[region] = true
+    end
+
+    local counts = { head = 0, torso = 0, limbs = 0 }
+    local armOffsets, legOffsets = {}, {}
+    for _, row in R6.regions do
+        check(known[row.region], "unknown region " .. tostring(row.region))
+        check(type(row.radius) == "number" and row.radius > 0, "region needs a radius")
+        check(type(row.offsetY) == "number", "region needs offsetY")
+        if row.region == Enums.HitRegion.Head then
+            counts.head += 1
+            eq(row.offsetY, 1.5, "head centre is 1.5 studs above the recorded torso centre")
+        elseif row.region == Enums.HitRegion.Torso then
+            counts.torso += 1
+            eq(row.offsetY, 0, "torso centre IS the recorded point")
+        else
+            counts.limbs += 1
+            if row.offsetY == 0 then
+                table.insert(armOffsets, row.offsetX)
+            elseif row.offsetY == -2.0 then
+                table.insert(legOffsets, row.offsetX)
+            end
+        end
+    end
+    eq(counts.head, 1, "one head sphere")
+    eq(counts.torso, 1, "one torso sphere")
+    eq(counts.limbs, 4, "four limb spheres (arms + legs), not one unhittable dot")
+    deepEq(H.sortedIds(armOffsets), { -1.5, 1.5 }, "arms sit at the shoulders")
+    deepEq(H.sortedIds(legOffsets), { -0.5, 0.5 }, "legs sit under the torso")
+
+    -- The frame itself: torso centre 3 studs above the feet, so the head centre
+    -- is 4.5 studs up (a real standing head top is ~5.5 — art spec §2).
+    eq(RigProfile.TorsoCentreAboveFeetStuds, 3.0, "torso centre height")
+    eq(RigProfile.TorsoCentreAboveFeetStuds + 1.5, 4.5, "head centre above the feet")
+
+    -- The recorded frame is the pivot, unchanged: GetPivot().Position IS the
+    -- torso centre for a stock rig, and this conversion is where that is said.
+    local centre = RigProfile.TorsoCentreFromPivot({ X = 1, Y = 2, Z = 3 })
+    eq(centre.x, 1, "x")
+    eq(centre.y, 2, "y (no vertical correction is invented here)")
+    eq(centre.z, 3, "z")
+
+    -- Dummies are built to the same frame (plan §1), so they must not drift.
+    eq(#RigProfile.Dummy.regions, #R6.regions, "the dummy rig has the same bands")
+    eq(RigProfile.Dummy.regions[1].offsetY, 1.5, "dummy head offset matches the player rig")
+end)
+
+test("HitDetectionCore refuses to build hitboxes without a rig profile", function()
+    local ok, err = pcall(H.Logic.HitDetectionCore.new, {
+        WindowSeconds = Constants.LagCompensationWindowMs / 1000,
+        SampleInterval = Constants.LagCompensationSampleInterval,
+        Enums = Enums,
+    })
+    eq(ok, false, "a missing rig profile must fail loudly, not resolve against untuned hitboxes")
+    check(tostring(err):find("RegionProfile") ~= nil, "the error names the missing config: " .. tostring(err))
+
+    local bad = pcall(H.Logic.HitDetectionCore.new, {
+        WindowSeconds = Constants.LagCompensationWindowMs / 1000,
+        SampleInterval = Constants.LagCompensationSampleInterval,
+        Enums = Enums,
+        RegionProfile = { name = "Typo", regions = { { region = "HED", offsetY = 1.5, radius = 0.55 } } },
+    })
+    eq(bad, false, "a typo'd region name must fail loudly")
+end)
+
+test("chest, head and leg shots land in the right band — and the phantom head is gone", function()
+    -- (1) The Q1-3 regression itself: the old rig put the head sphere 3.0 studs
+    -- above the pivot. Nothing is there in the real rig, so that shot is a MISS.
+    lane(30)
+    local phantom = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y + 3.0, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(phantom.hit, nil, "the phantom head at pivot + 3.0 does not exist")
+    eq(phantom.reason, "MISS", "it is a clean miss, not a hit on a body part")
+
+    -- (2) Leg band.
+    H.advance(0.3)
+    local legs = H.fire(101, "Viper9", { x = 0, y = LEGS_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    check(legs.hit ~= nil, "a low shot must hit the legs: " .. tostring(legs.reason))
+    eq(legs.hit.region, Enums.HitRegion.Limbs, "leg band")
+    local legsExpected = H.Shared.Weapons.DamageAtRange("Viper9", legs.hit.distance) * H.Shared.Combat.LimbMultiplier
+    eq(legs.damage, math.round(legsExpected * 10) / 10, "limb damage is the config number x the limb multiplier")
+
+    -- (3) Chest band: the shot the owner will take most often.
+    H.advance(0.3)
+    local chest = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    check(chest.hit ~= nil, "a chest-height shot must hit the torso: " .. tostring(chest.reason))
+    eq(chest.hit.region, Enums.HitRegion.Torso, "torso band")
+    check(chest.hit.distance > 28 and chest.hit.distance < 29, "torso surface is ~28.9 studs out")
+
+    -- (4) Head band, and it one-taps: the config's head multiplier is x3.5
+    -- (plan §4: 119 at full damage, i.e. inside the 18-stud band; this lane is
+    -- 30 studs out, so the falloff number is lower — still a one-tap).
+    H.advance(0.3)
+    local head = H.fire(101, "Viper9", { x = 0, y = HEAD_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    check(head.hit ~= nil, "a head-height shot must hit the head: " .. tostring(head.reason))
+    eq(head.hit.region, Enums.HitRegion.Head, "head band")
+    local headExpected = H.Shared.Weapons.DamageAtRange("Viper9", head.hit.distance) * H.Shared.Combat.HeadMultiplier
+    eq(head.damage, math.round(headExpected * 10) / 10, "head damage is the config number x the head multiplier")
+    check(head.damage >= Constants.MaxHealth, ("a headshot must one-tap: %.1f damage"):format(head.damage))
+    eq(head.lethal, true, "lethal")
+    eq(H.service("PlayerState"):GetHealth(106), 0, "the victim is at 0 HP")
+end)
+
+-- ==========================================================================
+section("A3a — the body mirrors the registry (damage, death, next round)")
+-- ==========================================================================
+
+-- §3: PlayerHealth.hp is the truth, the Humanoid is a one-way mirror. The
+-- registry writes (never Humanoid:TakeDamage — two writers), BreakJointsOnDeath
+-- stays false so the body never comes apart, and death is a stiff limp pose.
+
+test("damage and death are written to the character, not taken by the engine", function()
+    lane(30)
+    local humanoid = H.humanoid(106)
+    check(humanoid ~= nil, "the character has a Humanoid")
+    eq(humanoid.BreakJointsOnDeath, false, "spawn sets BreakJointsOnDeath = false (no gore)")
+    eq(humanoid.Health, Constants.MaxHealth, "the body starts at full health")
+
+    -- 40 damage straight through the authority chain.
+    local applied = H.service("PlayerState"):ApplyDamage(106, 40, 101, "ARC5")
+    eq(applied.applied, true, "the damage was applied by the registry")
+    eq(H.service("PlayerState"):GetHealth(106), 60, "registry hp")
+    eq(humanoid.Health, 60, "the body mirrors the registry")
+    eq(humanoid.PlatformStand, false, "a damaged player still stands")
+
+    -- Lethal: the registry writes 0 and the body is posed.
+    local lethal = H.service("PlayerState"):ApplyDamage(106, 60, 101, "ARC5")
+    eq(lethal.lethal, true, "lethal")
+    eq(humanoid.Health, 0, "the body is dead")
+    eq(humanoid.PlatformStand, true, "death pose: PlatformStand")
+    eq(humanoid.AutoRotate, false, "death pose: no auto-rotate")
+    eq(H.service("PlayerState"):IsAlive(106), false, "and the registry agrees")
+
+    -- A shot at a corpse is not a hit at all (no double-kill, no extra credit).
+    local corpse = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(corpse.hit, nil, "a dead player is not a candidate")
+end)
+
+test("the next round stands the body back up at full health", function()
+    local ctx = lane(30)
+    killAll(ctx.wardens) -- the round has to END before round 2 exists
+    eq(H.humanoid(106).Health, 0, "body down")
+    eq(H.service("PlayerState"):IsAlive(106), false, "out for the round")
+
+    H.advance(Constants.RoundEndPause) -- round 1 ends -> round 2 buy phase
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "round 2 buy phase")
+    eq(H.service("PlayerState"):GetHealth(106), Constants.MaxHealth, "health restored for the round")
+    eq(H.humanoid(106).Health, Constants.MaxHealth, "and the body is back on its feet")
+    eq(H.humanoid(106).PlatformStand, false, "standing")
+end)
+
+-- ==========================================================================
+section("A3a — the shot round trip (three Alpha weapons, server-authoritative)")
+-- ==========================================================================
+
+-- Every Alpha weapon fires through the ONE remote (Combat.Client:FireRequest)
+-- and resolves server-side: ownership from the rental ledger, rate limit,
+-- rewound ray, DamageModel, PlayerStateService, targeted feedback. Nothing in
+-- these cases touches damage directly — the whole chain is the real code.
+
+-- Win round 1, buy a weapon in the round-2 buy phase, go live again.
+local function buyAndAction(shooterId, weaponId)
+    killAll({ 106, 107, 108, 109, 110 })
+    H.advance(Constants.RoundEndPause)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "round 2 buy phase")
+    local buyer = H.players:GetPlayerByUserId(shooterId)
+    local bought = H.service("Economy").Client:RequestPurchase(buyer, { type = "WEAPON", id = weaponId })
+    eq(bought.ok, true, "bought " .. weaponId .. ": " .. tostring(bought.reason))
+    -- Step a hair PAST the buy-phase deadline: the FSM compares
+    -- `now - phaseStartedAt >= BuyPhaseDuration`, and at this clock scale the
+    -- exact-boundary subtraction can land 1e-15 short (a float artifact of
+    -- advancing one tick; a live server ticks ~60x/s and crosses it anyway).
+    H.advance(Constants.BuyPhaseDuration + 1e-6)
+    eq(H.snapshot().phase, Enums.Phase.Action, "round 2 is live")
+    H.setCharacter(shooterId, 0, PIVOT_Y, 0)
+    H.setCharacter(106, 0, PIVOT_Y, -30)
+    H.advance(0)
+end
+
+test("each Alpha weapon fires end to end and deals its config damage", function()
+    -- Viper-9: the free sidearm every round.
+    lane(30)
+    local free = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(free.ok, true, "Viper-9 fires")
+    check(free.hit ~= nil, "and lands: " .. tostring(free.reason))
+    eq(free.hit.region, Enums.HitRegion.Torso, "torso")
+    check(math.abs(free.damage - H.Shared.Weapons.DamageAtRange("Viper9", free.hit.distance)) < 0.05, "config damage")
+
+    -- CQB-2: bought in the buy phase, 1200 credits.
+    buyAndAction(101, "CQB2")
+    eq(H.service("Economy"):GetLoadout(101).primary, "CQB2", "the rent is on the ledger")
+    local smg = H.fire(101, "CQB2", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(smg.ok, true, "CQB-2 fires")
+    check(smg.hit ~= nil, "and lands: " .. tostring(smg.reason))
+    eq(smg.weaponId, "CQB2", "the shot is attributed to the SMG")
+    check(
+        math.abs(smg.damage - H.Shared.Weapons.DamageAtRange("CQB2", smg.hit.distance)) < 0.05,
+        ("CQB-2 damage must be the config number at %s studs (got %s)"):format(smg.hit.distance, smg.damage)
+    )
+
+    -- ARC-5: bought in the buy phase, 2700 credits.
+    buyAndAction(101, "ARC5")
+    local rifle = H.fire(101, "ARC5", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(rifle.ok, true, "ARC-5 fires")
+    check(rifle.hit ~= nil, "and lands: " .. tostring(rifle.reason))
+    check(
+        math.abs(rifle.damage - H.Shared.Weapons.DamageAtRange("ARC5", rifle.hit.distance)) < 0.05,
+        ("ARC-5 damage must be the config number at %s studs (got %s)"):format(rifle.hit.distance, rifle.damage)
+    )
+end)
+
+test("the shooter is told about his own shot and nobody else is", function()
+    lane(30)
+    local log = H.spyCombat()
+    local shot = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    check(shot.hit ~= nil, "the shot landed")
+    deepEq(H.signalsFor(log, 101), { "HitConfirmed", "ShotResolved" }, "hitmarker + shot resolution")
+    deepEq(H.signalsFor(log, 106), { "DamageTaken" }, "the victim hears only their own damage")
+    deepEq(H.recipients(log), { 101, 106 }, "exactly the two players involved")
+    eq(#log.broadcast, 0, "nothing was broadcast")
+end)
+
+test("a weapon the round did not issue is refused (NOT_OWNED)", function()
+    lane(30)
+    local result = H.fire(101, "CQB2", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(result.ok, false, "the shot is refused")
+    eq(result.reason, "NOT_OWNED", "the SMG was not rented this round")
+    eq(H.service("PlayerState"):GetHealth(106), Constants.MaxHealth, "no damage from a refused shot")
+end)
+
+test("the server enforces the weapon's fire rate (client cannot out-shoot it)", function()
+    lane(30)
+    local first = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(first.ok, true, "first shot resolves")
+    local second = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(second.ok, false, "an immediate second shot is refused")
+    eq(second.reason, "RATE_LIMITED", "240 RPM -> one shot per 0.25 s")
+    H.advance(0.3)
+    eq(H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 }).ok, true, "and it clears")
+
+    -- The CQB-2's own gate is its own number (600 RPM -> 0.1 s).
+    buyAndAction(101, "CQB2")
+    eq(H.fire(101, "CQB2", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 }).ok, true, "SMG shot 1")
+    local rapid = H.fire(101, "CQB2", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(rapid.reason, "RATE_LIMITED", "the automatic's 0.1 s gate is server-side too")
+end)
+
+test("a player the server never seated is not a target (no ghost damage)", function()
+    lane(30)
+    -- Drop the victim from the match-scoped registries mid-round, the way a
+    -- leave / round reset does. Nothing may re-create him on the damage path.
+    H.service("PlayerState"):CleanupPlayer(106)
+    eq(H.service("PlayerState"):GetHealth(106), nil, "no health entry")
+    eq(H.service("PlayerState"):IsRegistered(106), false, "not registered")
+
+    local shot = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(shot.hit, nil, "an unregistered player cannot be hit")
+    eq(shot.reason, "MISS", "it is a clean miss, not damage to a phantom")
+
+    local refused = H.service("PlayerState"):ApplyDamage(106, 50, 101, "Viper9")
+    eq(refused.applied, false, "the registry refuses the damage")
+    eq(refused.state, nil, "and hands back no state")
+    eq(H.service("PlayerState"):GetHealth(106), nil, "no ghost entry was created")
+end)
+
+test("practice dummies, spawn pads and effect parts cannot eat a bullet", function()
+    lane(30)
+    -- A fat dummy-shaped block, a spawn pad and an effect part, all sitting in
+    -- the middle of the lane. Foldered under Dummies / Spawns / FX, they are
+    -- excluded from the geometry query as whole folders (readiness notes §9).
+    H.addWorldPart("Dummy_1_Torso", "Dummies", { 0, PIVOT_Y, -15 }, { 20, 12, 2 })
+    H.addWorldPart("Spawn_Raiders_1", "Spawns", { 0, PIVOT_Y, -15 }, { 20, 12, 2 })
+    H.addWorldPart("FX_Tracer", "FX", { 0, PIVOT_Y, -15 }, { 20, 12, 2 })
+
+    local through = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(through.ok, true, "the shot resolves")
+    check(through.hit ~= nil, "the bullet reached the player: " .. tostring(through.reason))
+    eq(through.hit.id, 106, "and hit the player, not the dummy")
+    eq(through.hit.region, Enums.HitRegion.Torso, "torso")
+
+    -- Control: the same geometry OUTSIDE those folders IS cover. Without this
+    -- the case above would pass even if the world query did nothing at all.
+    H.addWall("DockContainer", { 0, PIVOT_Y, -15 }, { 20, 12, 2 })
+    H.advance(0.3)
+    local blocked = H.fire(101, "Viper9", { x = 0, y = PIVOT_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    eq(blocked.reason, "MISS_GEOMETRY", "world geometry in the lane still blocks")
+    eq(blocked.blockedBy.name, "DockContainer", "the blocker is named")
+end)
+
+test("the owner's loop: buy the ARC-5, headshot, kill credit, elimination", function()
+    local ctx = freshAction()
+    local economy = H.service("Economy")
+    local match = H.service("Match")
+    local playerState = H.service("PlayerState")
+
+    -- Win round 1 (+3000), shop in the round-2 buy phase.
+    killAll(ctx.wardens)
+    H.advance(Constants.RoundEndPause)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "buy phase")
+    local bought = economy.Client:RequestPurchase(ctx.players[1], { type = "WEAPON", id = "ARC5" })
+    eq(bought.ok, true, "ARC-5 rented for 2700")
+    eq(bought.balance, 300, "3000 - 2700")
+
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "round 2 in action")
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.setCharacter(106, 0, PIVOT_Y, -30)
+    H.advance(0)
+
+    local eliminations = {}
+    match.Client.PlayerEliminated:Connect(function(payload)
+        table.insert(eliminations, payload)
+    end)
+
+    local log = H.spyCombat()
+    local shot = H.fire(101, "ARC5", { x = 0, y = HEAD_Y, z = 0 }, { x = 0, y = 0, z = -1 })
+    check(shot.hit ~= nil, "the headshot lands: " .. tostring(shot.reason))
+    eq(shot.hit.region, Enums.HitRegion.Head, "head band")
+    eq(shot.lethal, true, "ARC-5 headshot is a one-tap")
+    eq(shot.balance, 600, "kill credit: 300 + the §5.1 kill award")
+    H.flush()
+
+    -- The kill is real on every layer: registry, body, economy, match FSM.
+    eq(playerState:IsAlive(106), false, "the victim is dead in the registry")
+    eq(playerState:GetHealth(106), 0, "at 0 HP")
+    eq(H.humanoid(106).Health, 0, "and dead in the world")
+    eq(economy:GetBalance(101), 600, "the kill is paid (§5.1 +300)")
+    eq(#eliminations, 1, "one elimination report")
+    eq(eliminations[1].playerId or eliminations[1].id, 106, "for the victim")
+
+    -- And the shooter was told, the victim was told, nobody else was.
+    deepEq(H.signalsFor(log, 101), { "HitConfirmed", "ShotResolved" }, "shooter feedback")
+    eq(H.payloadFor(log, 101, "HitConfirmed").lethal, true, "the hitmarker says lethal")
+    eq(H.payloadFor(log, 106, "DamageTaken").hp, 0, "the victim's own HUD math sees 0 HP")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
     for _, failure in failed do

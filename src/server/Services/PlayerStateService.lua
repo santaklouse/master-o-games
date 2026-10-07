@@ -73,16 +73,20 @@ local function newCharacterRig(character)
     end
 
     local rig = {}
-    rig.Setup = function(maxHealth)
+    -- COLON methods: AvatarLink calls them as rig:Method(...), so the adapter
+    -- (and A3b's dummy adapter) must take self first. Getting this wrong is
+    -- silent — the first argument lands in the parameter and the body ends up
+    -- written a table — so the interface is stated once, here.
+    function rig:Setup(maxHealth)
         humanoid.MaxHealth = maxHealth
         humanoid.Health = maxHealth
         humanoid.BreakJointsOnDeath = false
     end
-    rig.SetHealth = function(hp, maxHealth, _armor)
+    function rig:SetHealth(hp, maxHealth, _armor)
         humanoid.MaxHealth = maxHealth
         humanoid.Health = hp -- a literal SET, never Humanoid:TakeDamage
     end
-    rig.SetAlive = function(alive)
+    function rig:SetAlive(alive)
         humanoid.PlatformStand = not alive
         humanoid.AutoRotate = alive
     end
