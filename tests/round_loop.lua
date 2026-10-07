@@ -1727,6 +1727,141 @@ test("the owner's loop: buy the ARC-5, headshot, kill credit, elimination", func
 end)
 
 -- ==========================================================================
+section("A3a — the client firing input (click -> server-authoritative shot)")
+-- ==========================================================================
+-- Nothing on the client ever called CombatService.Client:FireRequest before
+-- this. These cases drive the REAL client tree (init.client.lua ->
+-- Knit.AddControllers -> CombatController) with REAL input (a
+-- UserInputService.InputBegan carrying MouseButton1) and assert what the
+-- server saw — not that a function exists.
+
+-- Bring a booted client to a live round: the local player (101) is the early
+-- joiner, nine more fill the lobby, the buy phase ticks out.
+local function clientInAction()
+    local client = H.bootClient({ server = { preJoinPlayers = 1 } })
+    check(client.bootOk, "init.client.lua failed to run: " .. tostring(client.bootErr))
+    check(client.initError == nil, "a controller's KnitInit errored: " .. tostring(client.initError))
+    check(client.flushError == nil, "a controller's KnitStart errored: " .. tostring(client.flushError))
+    H.joinPlayers(102, 9)
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "the round is live")
+    return client, client.controller("Combat")
+end
+
+local function firedCalls(calls, from)
+    local out = {}
+    for index = from + 1, #calls do
+        if calls[index] == "Combat:FireRequest" then
+            table.insert(out, calls[index])
+        end
+    end
+    return out
+end
+
+test("a mouse click fires the equipped weapon down the server's own path", function()
+    local client, controller = clientInAction()
+    check(controller ~= nil, "no Combat controller registered on the client")
+    eq(controller.phase, Enums.Phase.Action, "the controller learned the phase from the server, not a timer")
+    eq(controller.equipped, "Viper9", "the free sidearm the round issued is what is in hand")
+    -- The local player's body and the warden down the -Z lane.
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.setCharacter(106, 0, PIVOT_Y, -30)
+    H.advance(0)
+    local hpBefore = H.service("PlayerState"):GetHealth(106)
+    -- Aim the camera at the victim's torso centre and click the mouse.
+    H.client.aim(0, HEAD_Y, -2, 0, -1.5, -30)
+    local before = #client.calls
+    H.client.click()
+    H.advance(0)
+    eq(#firedCalls(client.calls, before), 1, "one click -> one fire request (" .. table.concat(client.calls, ", ") .. ")")
+    check(
+        H.service("PlayerState"):GetHealth(106) < hpBefore,
+        "the click must actually hurt the victim through the server authority chain"
+    )
+    -- Past the RPM gate (Viper-9 is 240 RPM -> 0.25 s), take the server's own
+    -- answer so the payload itself is asserted, not just that a call happened.
+    H.advance(0.3)
+    local shot = controller:TryFire()
+    check(shot ~= nil and shot.ok == true, "the trigger path returns the server's answer: " .. tostring(shot and shot.reason))
+    eq(shot.weaponId, "Viper9", "the shot is attributed to the weapon in hand")
+    check(shot.hit ~= nil, "and it landed: " .. tostring(shot.reason))
+    eq(shot.hit.id, 106, "on the player under the camera's aim")
+    eq(shot.hit.region, Enums.HitRegion.Torso, "in the torso band the aim points at")
+end)
+test("outside ACTION the click is dropped silently — no remote call, no error spam", function()
+    local client = H.bootClient({ server = { preJoinPlayers = 1 } })
+    local controller = client.controller("Combat")
+    -- LOBBY: nothing to shoot with, nothing to shoot at.
+    eq(H.snapshot().phase, Enums.Phase.Lobby, "the client boots into the lobby")
+    local lobbyBefore = #client.calls
+    H.client.click()
+    H.advance(0)
+    eq(#firedCalls(client.calls, lobbyBefore), 0, "the lobby swallows the click")
+    -- BUY_PHASE: the free sidearm IS in hand here, so this is the phase gate
+    -- doing the work, not a missing weapon.
+    H.joinPlayers(102, 9)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "buy phase")
+    eq(controller.equipped, "Viper9", "the round issued the free sidearm")
+    local buyBefore = #client.calls
+    H.client.click()
+    H.advance(0)
+    eq(#firedCalls(client.calls, buyBefore), 0, "nothing fires during the buy phase")
+    -- Silence means no warn/traceback either: a click loop must not spam.
+    eq(client.flushError, nil, "no error came out of the dropped clicks: " .. tostring(client.flushError))
+    -- And the same input fires the moment the round goes live.
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "action")
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.advance(0)
+    H.client.aim(0, HEAD_Y, -2, 0, 0, -1)
+    local actionBefore = #client.calls
+    H.client.click()
+    H.advance(0)
+    eq(#firedCalls(client.calls, actionBefore), 1, "the same click fires once the round is live")
+end)
+test("equipped follows the ledger: a rented ARC-5 is what the next click fires", function()
+    local client, controller = clientInAction()
+    -- Win round 1 (+3000) so the 2700-credit rifle is affordable, then shop in
+    -- the round-2 buy phase.
+    killAll({ 106, 107, 108, 109, 110 })
+    H.advance(Constants.RoundEndPause)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "round 2 buy phase")
+    eq(controller.loadout.primary, nil, "nothing rented yet")
+    local bought = H.service("Economy").Client:RequestPurchase(H.players:GetPlayerByUserId(101), {
+        type = "WEAPON",
+        id = "ARC5",
+    })
+    eq(bought.ok, true, "ARC-5 rented: " .. tostring(bought.reason))
+    eq(controller.equipped, "ARC5", "the client's equipped state followed the ledger off the purchase signal")
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "round 2 in action")
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.setCharacter(106, 0, PIVOT_Y, -30)
+    H.advance(0)
+    H.client.aim(0, HEAD_Y, -2, 0, -1.5, -30)
+    local shot = controller:TryFire()
+    check(shot ~= nil and shot.ok == true, "the rented rifle fires: " .. tostring(shot and shot.reason))
+    eq(shot.weaponId, "ARC5", "the click fired the rifle, not the free sidearm")
+    check(shot.hit ~= nil, "and it landed: " .. tostring(shot.reason))
+    eq(client.flushError, nil, "no error out of the firing path")
+end)
+test("a shooting player with no body left (dead/respawning) fires nothing", function()
+    local client, controller = clientInAction()
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.advance(0)
+    -- The engine clears Character on death and repopulates it on respawn; the
+    -- input must survive that window without throwing on every click.
+    H.players:GetPlayerByUserId(101).Character = nil
+    local before = #client.calls
+    H.client.aim(0, HEAD_Y, -2, 0, 0, -1)
+    H.client.click()
+    H.advance(0)
+    eq(#firedCalls(client.calls, before), 0, "no fire request without a character to aim from")
+    eq(client.flushError, nil, "and no error: " .. tostring(client.flushError))
+    eq(controller.equipped, "Viper9", "the weapon state is untouched by the gap")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
     for _, failure in failed do

@@ -101,6 +101,13 @@ function EconomyService:SettleRoundForPlayer(playerId, playerTeam, roundWinnerTe
 	return result
 end
 
+-- Read-back of the caller's OWN loadout (A3a firing seam). The client's firing
+-- input may only shoot what the server says is in hand this round, so it asks
+-- here rather than caching a guess. There is no player argument to forge: the
+-- id comes from the invoking player, never from the payload.
+function EconomyService.Client:FetchLoadout(player)
+	return ledger:GetLoadout(player.UserId)
+end
 -- §5.3 rental reset (re-buy each buy phase); keeps credits.
 function EconomyService:ResetRentals(playerId)
 	ledger:ResetRentals(playerId)
