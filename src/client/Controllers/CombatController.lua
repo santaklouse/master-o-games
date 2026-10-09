@@ -64,7 +64,7 @@ local Knit = require(ReplicatedStorage:WaitForChild("Packages"):WaitForChild("Kn
 local Shared = require(ReplicatedStorage:WaitForChild("Shared"))
 
 local CombatController = Knit.CreateController({
-    Name = "Combat",
+	Name = "Combat",
 })
 
 -- Roblox EnumItem, read once at load: it cannot change at runtime.
@@ -76,72 +76,72 @@ local FIRE_INPUT = Enum.UserInputType.MouseButton1
     server-derived instead of guessed from its own timers.
 ]]
 local REFRESH_ON = {
-    "BuyPhaseStarted",
-    "BuyPhaseEnded",
-    "RoundStarted",
-    "RoundEnded",
-    "MatchStarted",
-    "MatchEnded",
+	"BuyPhaseStarted",
+	"BuyPhaseEnded",
+	"RoundStarted",
+	"RoundEnded",
+	"MatchStarted",
+	"MatchEnded",
 }
 
 function CombatController:KnitInit()
-    self.phase = nil -- last phase the server reported (Enums.Phase)
-    self.loadout = nil -- last loadout the server reported
-    self.equipped = nil -- weaponId in hand, or nil
-    self._services = {
-        Match = Knit.GetService("Match"),
-        Economy = Knit.GetService("Economy"),
-        Combat = Knit.GetService("Combat"),
-    }
-    for _, name in REFRESH_ON do
-        local signal = self._services.Match[name]
-        if signal ~= nil then
-            signal:Connect(function()
-                self:_refresh()
-            end)
-        end
-    end
-    -- A purchase or a round payout moves credits, and the loadout may have
-    -- moved with it, so re-read it here too. This is what makes a bought rifle
-    -- the weapon the next click fires, with no buy menu in the loop yet.
-    self._services.Economy.CreditsChanged:Connect(function()
-        self:_refreshLoadout()
-    end)
+	self.phase = nil -- last phase the server reported (Enums.Phase)
+	self.loadout = nil -- last loadout the server reported
+	self.equipped = nil -- weaponId in hand, or nil
+	self._services = {
+		Match = Knit.GetService("Match"),
+		Economy = Knit.GetService("Economy"),
+		Combat = Knit.GetService("Combat"),
+	}
+	for _, name in REFRESH_ON do
+		local signal = self._services.Match[name]
+		if signal ~= nil then
+			signal:Connect(function()
+				self:_refresh()
+			end)
+		end
+	end
+	-- A purchase or a round payout moves credits, and the loadout may have
+	-- moved with it, so re-read it here too. This is what makes a bought rifle
+	-- the weapon the next click fires, with no buy menu in the loop yet.
+	self._services.Economy.CreditsChanged:Connect(function()
+		self:_refreshLoadout()
+	end)
 end
 
 function CombatController:KnitStart()
-    self:_refresh()
-    UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == FIRE_INPUT then
-            self:TryFire()
-        end
-    end)
+	self:_refresh()
+	UserInputService.InputBegan:Connect(function(input)
+		if input.UserInputType == FIRE_INPUT then
+			self:TryFire()
+		end
+	end)
 end
 
 -- Server state read-back -----------------------------------------------------
 
 function CombatController:_refresh()
-    local ok, snapshot = pcall(function()
-        return self._services.Match.FetchMatchState:InvokeAsync()
-    end)
-    if ok and type(snapshot) == "table" and snapshot.phase ~= nil then
-        self.phase = snapshot.phase
-    end
-    self:_refreshLoadout()
+	local ok, snapshot = pcall(function()
+		return self._services.Match.FetchMatchState:InvokeAsync()
+	end)
+	if ok and type(snapshot) == "table" and snapshot.phase ~= nil then
+		self.phase = snapshot.phase
+	end
+	self:_refreshLoadout()
 end
 
 function CombatController:_refreshLoadout()
-    local ok, loadout = pcall(function()
-        return self._services.Economy.FetchLoadout:InvokeAsync()
-    end)
-    if not ok or type(loadout) ~= "table" then
-        return
-    end
-    self.loadout = loadout
-    -- Primary first: a player who rented a rifle means to shoot the rifle, and
-    -- with nothing rented the round's free sidearm is what is in hand. Melee is
-    -- not in the chain — a knife has no ranged fire in this design (A3b/A5).
-    self.equipped = loadout.primary or loadout.sidearm
+	local ok, loadout = pcall(function()
+		return self._services.Economy.FetchLoadout:InvokeAsync()
+	end)
+	if not ok or type(loadout) ~= "table" then
+		return
+	end
+	self.loadout = loadout
+	-- Primary first: a player who rented a rifle means to shoot the rifle, and
+	-- with nothing rented the round's free sidearm is what is in hand. Melee is
+	-- not in the chain — a knife has no ranged fire in this design (A3b/A5).
+	self.equipped = loadout.primary or loadout.sidearm
 end
 
 -- Firing ---------------------------------------------------------------------
@@ -153,47 +153,47 @@ end
     deliberate: this runs on every click, so it never warns.
 ]]
 function CombatController:TryFire()
-    if self.phase ~= Shared.Enums.Phase.Action then
-        return nil
-    end
-    local weaponId = self.equipped
-    if weaponId == nil or Shared.Weapons[weaponId] == nil then
-        return nil
-    end
-    local aim = self:_aim()
-    if aim == nil then
-        return nil
-    end
-    local ok, result = pcall(function()
-        return self._services.Combat.FireRequest:InvokeAsync({
-            weaponId = weaponId,
-            -- Server clock domain: CombatService compares this against
-            -- Workspace:GetServerTimeNow(), never os.clock().
-            fireTime = Workspace:GetServerTimeNow(),
-            origin = { x = aim.origin.X, y = aim.origin.Y, z = aim.origin.Z },
-            dir = { x = aim.dir.X, y = aim.dir.Y, z = aim.dir.Z },
-        })
-    end)
-    if not ok then
-        return nil
-    end
-    return result
+	if self.phase ~= Shared.Enums.Phase.Action then
+		return nil
+	end
+	local weaponId = self.equipped
+	if weaponId == nil or Shared.Weapons[weaponId] == nil then
+		return nil
+	end
+	local aim = self:_aim()
+	if aim == nil then
+		return nil
+	end
+	local ok, result = pcall(function()
+		return self._services.Combat.FireRequest:InvokeAsync({
+			weaponId = weaponId,
+			-- Server clock domain: CombatService compares this against
+			-- Workspace:GetServerTimeNow(), never os.clock().
+			fireTime = Workspace:GetServerTimeNow(),
+			origin = { x = aim.origin.X, y = aim.origin.Y, z = aim.origin.Z },
+			dir = { x = aim.dir.X, y = aim.dir.Y, z = aim.dir.Z },
+		})
+	end)
+	if not ok then
+		return nil
+	end
+	return result
 end
 
 -- Head position (origin) + camera look vector (direction), or nil when the
 -- character or the camera is not there yet (respawn, load, Studio Play).
 function CombatController:_aim()
-    local player = Players.LocalPlayer
-    local character = player and player.Character
-    local head = character and character:FindFirstChild("Head")
-    if head == nil then
-        return nil
-    end
-    local camera = Workspace.CurrentCamera
-    if camera == nil or camera.CFrame == nil then
-        return nil
-    end
-    return { origin = head.Position, dir = camera.CFrame.LookVector }
+	local player = Players.LocalPlayer
+	local character = player and player.Character
+	local head = character and character:FindFirstChild("Head")
+	if head == nil then
+		return nil
+	end
+	local camera = Workspace.CurrentCamera
+	if camera == nil or camera.CFrame == nil then
+		return nil
+	end
+	return { origin = head.Position, dir = camera.CFrame.LookVector }
 end
 
 return CombatController
