@@ -211,20 +211,34 @@ function CombatService.Client:FireRequest(player, payload)
 		return { ok = false, reason = "UNKNOWN_WEAPON" }
 	end
 
-	-- 3. Server-side fire-rate gate (RPM -> min interval). The client
-	-- predicts firing for feel; the server is the authority on how fast
-	-- a weapon can actually shoot. Both stamps come from serverNow().
-	local now = serverNow()
-	if weapon.fireRateRPM and weapon.fireRateRPM > 0 then
-		local minInterval = 60 / weapon.fireRateRPM
-		local last = lastFireAt[player.UserId]
-		if last and (now - last) < minInterval then
-			return { ok = false, reason = "RATE_LIMITED" }
-		end
-		lastFireAt[player.UserId] = now
+	-- 3. RANGED ONLY. A fire request is a bullet, so the weapon must be a ranged
+	-- weapon carrying a positive fireRateRPM. Stated once, here, where the rest
+	-- of the validation lives, because the hole it closes was silent: the free
+	-- melee (Weapons.Talon, class "Melee") is issued to every player every round,
+	-- it has no fireRateRPM field at all, and the rate gate below was written as
+	-- `if weapon.fireRateRPM and ...` — so the gate was SKIPPED for it and the
+	-- ranged hitscan resolved a knife at the full hitscan range (300 studs),
+	-- unlimited times per second, without the player buying anything. "No RPM" is
+	-- never "no limit"; a melee weapon has no ranged fire at all (A3b owns melee).
+	if weapon.class == "Melee" or not (weapon.fireRateRPM and weapon.fireRateRPM > 0) then
+		return { ok = false, reason = "NOT_A_RANGED_WEAPON" }
 	end
 
-	-- 4. Sanitize the ray. The server resolves the hit itself; the client
+	-- 4. Server-side fire-rate gate (RPM -> min interval). UNCONDITIONAL: step 3
+	-- has already proved fireRateRPM is a positive number, so every weapon that
+	-- reaches this line is rate-limited — the guard and the gate cannot drift
+	-- apart again. The client predicts firing for feel; the server is the
+	-- authority on how fast a weapon can actually shoot. Both stamps come from
+	-- serverNow().
+	local now = serverNow()
+	local minInterval = 60 / weapon.fireRateRPM
+	local last = lastFireAt[player.UserId]
+	if last and (now - last) < minInterval then
+		return { ok = false, reason = "RATE_LIMITED" }
+	end
+	lastFireAt[player.UserId] = now
+
+	-- 5. Sanitize the ray. The server resolves the hit itself; the client
 	-- payload only suggests where the camera pointed. fireTime is a
 	-- server-clock timestamp (Workspace:GetServerTimeNow() on the client,
 	-- the same domain this service records in); anything outside the
@@ -290,7 +304,7 @@ function CombatService.Client:FireRequest(player, payload)
 		end
 	end
 
-	-- 5. Lag-compensated hit resolution (the actual milestone), with the
+	-- 6. Lag-compensated hit resolution (the actual milestone), with the
 	-- world-geometry cover test inside the same ray.
 	-- NOTE: Knit binds Client methods with Client.Server = the service, so
 	-- self.Server is CombatService; _ResolveHit lives on the service.

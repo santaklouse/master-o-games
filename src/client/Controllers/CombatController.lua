@@ -25,6 +25,16 @@
          click is dropped silently — no remote call, no warn, no error spam.
          The server re-checks the phase anyway; this is a UX gate, never an
          authority.
+      4. THE BUY KEYS (owner-approved, 2026-09-30). Alpha ships no buy menu, so
+         without a key a player can only ever fire the free sidearm and the loop
+         the Alpha exists to prove (earn credits -> buy -> carry into the next
+         round) cannot be demonstrated. Three keys, nothing else, in the BUY
+         PHASE only: 1 = CQB-2, 2 = ARC-5, B = the cheapest affordable Alpha
+         weapon not already in hand. The purchase goes through the server like
+         the A5 menu will (Economy.Client:RequestPurchase), the price comes from
+         Shared.Weapons and the affordability from the replicated credits. No
+         HUD, no list, no timer — one plain printed line per key that does
+         something. See "Buy keys" below.
 
     WHAT IT DELIBERATELY DOES NOT DO: no HUD, no ammo, no tracers, no client
     prediction, recoil or spread. Those are A5/ART-2, and the server owns every
@@ -69,6 +79,55 @@ local CombatController = Knit.CreateController({
 
 -- Roblox EnumItem, read once at load: it cannot change at runtime.
 local FIRE_INPUT = Enum.UserInputType.MouseButton1
+local BUY_INPUT = Enum.UserInputType.Keyboard
+
+-- Buy keys ------------------------------------------------------------------
+--[[
+    WHY A KEY, AND WHY THESE KEYS. The Alpha has no buy menu (A5/UI-2 own the
+    HUD, the list and the timer) but the Alpha's whole point is the loop
+    earn credits -> buy -> carry into the next round, and a build where the only
+    weapon anyone can fire is the free sidearm cannot prove that loop. So three
+    keys, owner-approved, and nothing else:
+
+        1  -> CQB2   the Alpha entry rifle (1200 credits)
+        2  -> ARC5   the Alpha rifle (2700 credits)
+        B  -> the cheapest Alpha weapon that is affordable and not already in
+              hand, so a player who does not know the ids can still shop
+
+    WHERE EVERYTHING COMES FROM (nothing is invented on the client):
+      * the shop list is Shared.Weapons.AlphaPurchasable, the same config the
+        server's ledger prices from, so a key can never offer a weapon the
+        server will not sell (Longshot/Talon are deliberately NOT in it);
+      * the price is Shared.Weapons[id].price — never a hardcoded number here;
+      * affordability is read from the REPLICATED credits (Economy.Credits,
+        written by the server on every balance change), and the credits move
+        only when the server's ledger says so (RequestPurchase);
+      * "already in hand" mirrors the ledger's own ALREADY_OWNED rule off the
+        loadout the server reported.
+
+    THE PRINT CONTRACT (the entire UX, on purpose): exactly one plain line per
+    key press that does something — what was bought and what it cost, or why
+    nothing was bought. Outside the buy phase, silence: no request, no line, no
+    error spam, because a key can be held down.
+]]
+local KEY_WEAPONS = {
+	[Enum.KeyCode.One] = "CQB2",
+	[Enum.KeyCode.Two] = "ARC5",
+}
+local KEY_CHEAPEST = Enum.KeyCode.B
+local BUY_TAG = "[Buy]"
+-- The Alpha shop by id, built once from config. An id that is in the list but
+-- missing from the catalogue is dropped here (and refused at press time) rather
+-- than becoming a request the server answers UNKNOWN_ITEM.
+local ALPHA_SHOP = {}
+local ALPHA_ORDER = {}
+for _, id in ipairs(Shared.Weapons.AlphaPurchasable or {}) do
+	local weapon = Shared.Weapons[id]
+	if weapon ~= nil then
+		ALPHA_SHOP[id] = weapon
+		table.insert(ALPHA_ORDER, id)
+	end
+end
 
 --[[
     Every event that moves the phase. Re-fetching the snapshot on these (a
@@ -114,6 +173,8 @@ function CombatController:KnitStart()
 	UserInputService.InputBegan:Connect(function(input)
 		if input.UserInputType == FIRE_INPUT then
 			self:TryFire()
+		elseif input.UserInputType == BUY_INPUT then
+			self:TryBuyKey(input.KeyCode)
 		end
 	end)
 end
@@ -142,6 +203,143 @@ function CombatController:_refreshLoadout()
 	-- with nothing rented the round's free sidearm is what is in hand. Melee is
 	-- not in the chain — a knife has no ranged fire in this design (A3b/A5).
 	self.equipped = loadout.primary or loadout.sidearm
+end
+
+-- Buy keys -------------------------------------------------------------------
+
+-- One plain line, the only output this controller produces for shopping.
+function CombatController:_say(message)
+	print(("%s %s"):format(BUY_TAG, message))
+end
+
+--[[
+    The player's own balance, off the REPLICATED credits (Economy.Credits: the
+    server-written map of playerId -> credits). nil when the client has not been
+    told yet — no default, no guess: a balance we cannot read is a balance we
+    will not spend against.
+]]
+function CombatController:_credits()
+	local property = self._services.Economy.Credits
+	if property == nil then
+		return nil
+	end
+	local ok, balances = pcall(function()
+		return property:Get()
+	end)
+	if not ok or type(balances) ~= "table" then
+		return nil
+	end
+	local player = Players.LocalPlayer
+	local mine = player and balances[player.UserId]
+	if type(mine) ~= "number" then
+		return nil
+	end
+	return mine
+end
+
+-- Is this weapon's slot already filled this round? Mirrors the ledger's own
+-- ALREADY_OWNED rule (EconomyLedger:PurchaseWeapon reads the same slot), from
+-- the loadout the SERVER reported — the client keeps no rental state of its own.
+function CombatController:_slotTaken(weapon)
+	local loadout = self.loadout
+	if loadout == nil then
+		return false
+	end
+	if weapon.slot == "Primary" then
+		return loadout.primary ~= nil
+	elseif weapon.slot == "Sidearm" then
+		return loadout.sidearm ~= nil
+	elseif weapon.slot == "Melee" then
+		return loadout.melee ~= nil
+	end
+	return false
+end
+
+--[[
+    The cheapest Alpha weapon this player can actually take right now: cheapest
+    first, skipping anything already in hand and anything above the balance.
+    nil when there is nothing to buy — the caller says so in one line.
+]]
+function CombatController:_cheapestAffordable(balance)
+	if balance == nil then
+		return nil
+	end
+	local choice, choicePrice = nil, nil
+	for _, id in ipairs(ALPHA_ORDER) do
+		local weapon = ALPHA_SHOP[id]
+		if balance >= weapon.price and not self:_slotTaken(weapon) then
+			if choicePrice == nil or weapon.price < choicePrice then
+				choice, choicePrice = id, weapon.price
+			end
+		end
+	end
+	return choice
+end
+
+--[[
+    The ONE entry point for a buy key (1 / 2 / B). Returns the server's answer,
+    or nil when nothing was sent: not the buy phase (silent), nothing
+    affordable, or a weapon the Alpha does not sell. Every refusal is a single
+    printed line AND no remote call — a held-down key must not spam either.
+]]
+function CombatController:TryBuyKey(keyCode)
+	-- Gate 1: shopping is a buy-phase activity. The server re-checks this on
+	-- RequestPurchase (NOT_BUY_PHASE); this is the UX half, exactly like TryFire.
+	if self.phase ~= Shared.Enums.Phase.BuyPhase then
+		return nil
+	end
+	local balance = self:_credits()
+	local weaponId = KEY_WEAPONS[keyCode]
+	if weaponId == nil then
+		if keyCode ~= KEY_CHEAPEST then
+			return nil -- a key that is not a buy key: not ours to answer
+		end
+		weaponId = self:_cheapestAffordable(balance)
+	end
+	if weaponId == nil then
+		self:_say(("nothing affordable (credits %d) - no request sent"):format(balance or 0))
+		return nil
+	end
+	local weapon = ALPHA_SHOP[weaponId]
+	if weapon == nil then
+		-- Config drift, not player error: a bound id that is not in the Alpha
+		-- shop is refused here instead of being sent as a doomed request.
+		self:_say(("%s is not an Alpha purchasable weapon - no request sent"):format(weaponId))
+		return nil
+	end
+	if balance == nil or balance < weapon.price then
+		self:_say(
+			("cannot afford %s (%d credits, needs %d) - no request sent"):format(
+				weapon.name,
+				balance or 0,
+				weapon.price
+			)
+		)
+		return nil
+	end
+	if self:_slotTaken(weapon) then
+		self:_say(("%s is already in hand this round - no request sent"):format(weapon.name))
+		return nil
+	end
+	-- The purchase itself. Same client idiom as FetchLoadout, same remote the
+	-- A5 buy menu will call, and the server's ledger is the only thing that
+	-- moves credits or grants the weapon.
+	local ok, result = pcall(function()
+		return self._services.Economy.RequestPurchase:InvokeAsync({ type = "WEAPON", id = weaponId })
+	end)
+	if not ok or type(result) ~= "table" then
+		self:_say(("the server did not answer the purchase of %s - nothing bought"):format(weapon.name))
+		return nil
+	end
+	if result.ok then
+		-- The server also fires CreditsChanged at this client, which is what
+		-- moves self.equipped onto the new weapon (_refreshLoadout) — the
+		-- controller never assumes the purchase landed, it follows the ledger.
+		self:_say(("bought %s for %d credits (balance %s)"):format(weapon.name, weapon.price, tostring(result.balance)))
+	else
+		self:_say(("%s refused by the server: %s"):format(weapon.name, tostring(result.reason)))
+	end
+	return result
 end
 
 -- Firing ---------------------------------------------------------------------

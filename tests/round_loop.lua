@@ -1861,6 +1861,202 @@ test("a shooting player with no body left (dead/respawning) fires nothing", func
     eq(controller.equipped, "Viper9", "the weapon state is untouched by the gap")
 end)
 
+-- --------------------------------------------------------------------------
+-- A3a buy keys (owner-approved): 1 = CQB-2, 2 = ARC-5, B = cheapest affordable
+-- Alpha weapon not already in hand. Everything asserted here runs through the
+-- REAL client tree — a UserInputService.InputBegan / Keyboard event in, a
+-- purchase on the server's own RequestPurchase path out.
+
+local function callsNamed(calls, from, name)
+    local count = 0
+    for index = from + 1, #calls do
+        if calls[index] == name then
+            count += 1
+        end
+    end
+    return count
+end
+
+-- The lines the loaded trees printed since `from` (H.prints). The buy keys'
+-- whole UX is one plain line per press, so the line IS the assertion.
+local function linesSince(from)
+    local out = {}
+    for index = from + 1, #H.prints do
+        table.insert(out, H.prints[index])
+    end
+    return out
+end
+
+local function oneLine(lines)
+    check(#lines == 1, "exactly one printed line, got " .. #lines .. ": " .. table.concat(lines, " | "))
+    return lines[1]
+end
+
+test("buy key 1 takes the entry rifle in the buy phase and arms the next shot", function()
+    local client, controller = clientInAction()
+    -- Win round 1 so round 2's wallet can afford a rifle (RoundWin 3000).
+    killAll({ 106, 107, 108, 109, 110 })
+    H.advance(Constants.RoundEndPause)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "round 2 buy phase")
+    eq(controller.phase, Enums.Phase.BuyPhase, "the controller followed the server into the buy phase")
+    local economy = client.knit.GetService("Economy")
+    local balance = economy.Credits:Get()[101]
+    check(
+        balance >= H.Shared.Weapons.CQB2.price,
+        "the replicated wallet can afford the entry rifle: " .. tostring(balance)
+    )
+    local beforeCalls, beforeLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.One)
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, beforeCalls, "Economy:RequestPurchase"),
+        1,
+        "one press of 1 -> one purchase request down the server's own path (" .. table.concat(client.calls, ", ") .. ")"
+    )
+    -- The one printed line names what was bought and what it cost.
+    local line = oneLine(linesSince(beforeLines))
+    check(line:find("CQB-2", 1, true) ~= nil, "the line names the weapon bought: " .. line)
+    check(line:find("1200", 1, true) ~= nil, "and what it cost: " .. line)
+    -- The ledger granted it and the client's equipped state followed the
+    -- ledger's own CreditsChanged signal, not a client-side guess.
+    eq(controller.loadout.primary, "CQB2", "the server's ledger granted the primary")
+    eq(controller.equipped, "CQB2", "the bought rifle is what is in hand")
+    eq(economy.Credits:Get()[101], balance - H.Shared.Weapons.CQB2.price, "the server charged the config price")
+    -- Round goes live: the click must fire the RIFLE through the real tree.
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "round 2 in action")
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.setCharacter(106, 0, PIVOT_Y, -30)
+    H.advance(0)
+    H.client.aim(0, HEAD_Y, -2, 0, -1.5, -30)
+    local beforeFire = #client.calls
+    H.client.click()
+    H.advance(0)
+    eq(#firedCalls(client.calls, beforeFire), 1, "the click fires the bought rifle")
+    H.advance(0.3) -- past CQB-2's 600 RPM gate
+    local shot = controller:TryFire()
+    check(
+        shot ~= nil and shot.ok == true,
+        "the trigger path returns the server's answer: " .. tostring(shot and shot.reason)
+    )
+    eq(shot.weaponId, "CQB2", "the shot is attributed to the bought rifle, not the free sidearm")
+    check(shot.hit ~= nil, "and it landed: " .. tostring(shot.reason))
+    eq(client.flushError, nil, "no error out of the buy key path")
+end)
+
+test("an unaffordable buy key says so in one line and sends no request", function()
+    local client = H.bootClient({ server = { preJoinPlayers = 1 } })
+    check(client.bootOk, "init.client.lua failed to run: " .. tostring(client.bootErr))
+    H.joinPlayers(102, 9)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "the pistol round opens in the buy phase")
+    local controller = client.controller("Combat")
+    local economy = client.knit.GetService("Economy")
+    eq(economy.Credits:Get()[101], 0, "the pistol round opens with no credits")
+    local beforeCalls, beforeLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.One) -- CQB-2, 1200 credits
+    H.client.key(H.client.KeyCode.B) -- cheapest affordable -> nothing
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, beforeCalls, "Economy:RequestPurchase"),
+        0,
+        "nothing affordable -> no request sent (" .. table.concat(client.calls, ", ") .. ")"
+    )
+    local lines = linesSince(beforeLines)
+    eq(#lines, 2, "one line per key press and nothing else: " .. table.concat(lines, " | "))
+    for _, text in lines do
+        check(text:find("no request sent", 1, true) ~= nil, "the line states the refusal: " .. text)
+    end
+    check(lines[1]:find("CQB-2", 1, true) ~= nil, "key 1 with no credits names what it could not afford: " .. lines[1])
+    eq(controller.equipped, "Viper9", "still the free sidearm — nothing was bought")
+    eq(controller.loadout.primary, nil, "and no primary was granted")
+    eq(client.flushError, nil, "no error spam out of the refused keys: " .. tostring(client.flushError))
+end)
+
+test("buy key B takes the cheapest affordable weapon, key 2 is bound to the Alpha rifle", function()
+    local client, controller = clientInAction()
+    killAll({ 106, 107, 108, 109, 110 })
+    H.advance(Constants.RoundEndPause)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "round 2 buy phase")
+    local economy = client.knit.GetService("Economy")
+    local balance = economy.Credits:Get()[101]
+    local cqb, arc = H.Shared.Weapons.CQB2, H.Shared.Weapons.ARC5
+    check(
+        balance >= cqb.price and balance < cqb.price + arc.price,
+        "the wallet affords exactly one rifle: " .. tostring(balance)
+    )
+    local beforeCalls, beforeLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.B)
+    H.advance(0)
+    eq(callsNamed(client.calls, beforeCalls, "Economy:RequestPurchase"), 1, "B sent one request")
+    local line = oneLine(linesSince(beforeLines))
+    check(
+        line:find(cqb.name, 1, true) ~= nil and line:find(tostring(cqb.price), 1, true) ~= nil,
+        "B bought the cheapest: " .. line
+    )
+    eq(controller.loadout.primary, "CQB2", "which is the entry rifle")
+    -- Nothing left to buy: the primary slot is full. Still one line, still no request.
+    local spentCalls, spentLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.B)
+    H.advance(0)
+    eq(callsNamed(client.calls, spentCalls, "Economy:RequestPurchase"), 0, "no second request once the slot is taken")
+    check(
+        oneLine(linesSince(spentLines)):find("no request sent", 1, true) ~= nil,
+        "and it says so in one line: " .. tostring(linesSince(spentLines)[1])
+    )
+    -- Key 2 is really bound to the Alpha rifle: the refusal line names it and
+    -- its config price, and again no request goes out.
+    local arcCalls, arcLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.Two)
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, arcCalls, "Economy:RequestPurchase"),
+        0,
+        "key 2 does not send a request it cannot pay for"
+    )
+    local arcLine = oneLine(linesSince(arcLines))
+    check(arcLine:find(arc.name, 1, true) ~= nil, "key 2 is bound to " .. arc.name .. ": " .. arcLine)
+    check(arcLine:find(tostring(arc.price), 1, true) ~= nil, "and names its price: " .. arcLine)
+    eq(client.flushError, nil, "no error out of the buy keys")
+end)
+
+test("outside the buy phase a buy key is silent: no request, no line", function()
+    local client, controller = clientInAction()
+    eq(H.snapshot().phase, Enums.Phase.Action, "the round is live, so shopping is over")
+    local beforeCalls, beforeLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.One)
+    H.client.key(H.client.KeyCode.B)
+    H.advance(0)
+    eq(callsNamed(client.calls, beforeCalls, "Economy:RequestPurchase"), 0, "no request outside the buy phase")
+    eq(#linesSince(beforeLines), 0, "and no line either — a held key must not spam")
+    eq(controller.equipped, "Viper9", "the loadout is untouched")
+    eq(client.flushError, nil, "no error spam: " .. tostring(client.flushError))
+end)
+
+test("the free melee cannot be fired as a 300-stud hitscan (NOT_A_RANGED_WEAPON)", function()
+    local client = clientInAction()
+    -- Talon is issued FREE to every player every round, so it passes the
+    -- ownership check (§2 of FireRequest) — the only thing that can refuse this
+    -- shot is the ranged-only rule.
+    eq(H.service("Economy"):GetLoadout(101).melee, "Talon", "the free melee really is in the loadout")
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.setCharacter(106, 0, PIVOT_Y, -30)
+    H.advance(0)
+    local hpBefore = H.service("PlayerState"):GetHealth(106)
+    local origin = { x = 0, y = PIVOT_Y, z = 0 }
+    local dir = { x = 0, y = 0, z = -1 }
+    local shot = H.fire(101, "Talon", origin, dir)
+    eq(shot.ok, false, "a knife is not a bullet")
+    eq(shot.reason, "NOT_A_RANGED_WEAPON", "the refusal names the rule: " .. tostring(shot.reason))
+    eq(H.service("PlayerState"):GetHealth(106), hpBefore, "and no damage landed 30 studs away")
+    -- The gate is unconditional, not a rate limit: 20 requests inside the same
+    -- instant (Talon has no fireRateRPM to limit them) are all refused.
+    for _ = 1, 20 do
+        eq(H.fire(101, "Talon", origin, dir).reason, "NOT_A_RANGED_WEAPON", "still refused, never resolved")
+    end
+    eq(H.service("PlayerState"):GetHealth(106), hpBefore, "20 more attempts changed nothing")
+    eq(client.flushError, nil, "and the client tree is still healthy")
+end)
+
 -- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
