@@ -8,6 +8,15 @@
     This module is pure Luau with zero internal requires (see DamageModel
     header for the dependency-injection rule).
 
+    NO GHOST STATE (readiness notes §7, and the defect class that made match #2
+    answer DEAD to every shot): a player who was never registered has NO entry,
+    and `ApplyDamage` REFUSES to invent one — it returns nil. The old `_ensure`
+    on the damage path handed an unknown id a full 100 HP and `alive = true`,
+    so a shot at a player the server had never seated "landed" on a phantom and
+    health reads silently returned a number instead of the truth. Registration
+    is a round-lifecycle decision (Register/Revive), never a side effect of
+    reading or damaging.
+
     State per player (keyed by player.UserId / playerId string):
         {
             playerId, team, hp, maxHp = 100, armor = Enums.Armor.None,
@@ -61,10 +70,21 @@ function PlayerHealth:Register(playerId, team, armor)
 	return p
 end
 
--- Server-only damage application. Returns the resulting state; caller
--- (CombatService) decides follow-ups (kill credit, elimination report).
+-- Is this id actually registered for the current round? The read the combat
+-- path gates on — a `GetHealth ~= nil` test would have been true for the
+-- phantoms `_ensure` used to create, which is exactly the bug.
+function PlayerHealth:IsRegistered(playerId)
+	return self.players[playerId] ~= nil
+end
+
+-- Server-only damage application. Returns the resulting state, or nil when the
+-- id was never registered (see the header: never invent a victim), so the
+-- caller (CombatService) can refuse the hit instead of damaging a ghost.
 function PlayerHealth:ApplyDamage(playerId, amount, sourcePlayerId, weaponId)
-	local p = self:_ensure(playerId)
+	local p = self.players[playerId]
+	if p == nil then
+		return nil
+	end
 	-- Round to 2 decimals to avoid float drift accumulating over a match
 	-- (amounts like 25.5 / 22.5 / 20.999...). Health never goes below 0.
 	p.hp = math.max(0.0, math.round((p.hp - amount) * 100) / 100)
@@ -77,12 +97,20 @@ function PlayerHealth:ApplyDamage(playerId, amount, sourcePlayerId, weaponId)
 	return p
 end
 
+-- Armor write. Refuses an unregistered id for the same reason as ApplyDamage:
+-- no ghost entry may appear because a message arrived out of order. Returns the
+-- state, or nil when there is nothing to write to. (Registration happens in
+-- Register/Revive, which is where `_ensure` belongs.)
 function PlayerHealth:SetArmor(playerId, armor)
-	local p = self:_ensure(playerId)
+	local p = self.players[playerId]
+	if p == nil then
+		return nil
+	end
 	p.armor = armor
 	return p
 end
 
+-- Registration path for warmup / Phase 2 revive: creates the entry if missing.
 function PlayerHealth:Revive(playerId) -- Phase 2 / warmup use
 	local p = self:_ensure(playerId)
 	p.hp = self.MaxHealth

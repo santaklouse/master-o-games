@@ -17,8 +17,13 @@
     owns the Roblox-side raycaster glue (Phase 2 rig fitting).
 
     Regions: the MVP uses sphere hitboxes around a stock R6-ish skeleton
-    (Enums.HitRegion.*). CombatService overrides sizes per-character rig in
-    Phase 2; until then these are the recorded tuning defaults.
+    (Enums.HitRegion.*). The region geometry is INJECTED — see
+    shared/Config/RigProfile.lua, the one place that says where a body is in
+    the TORSO-CENTRE frame the recorder writes (Q1-3: the old built-in offsets
+    disagreed with the recorder, so chest shots missed and headshots aimed at
+    the sky). This module has no default profile on purpose: a constructor
+    without one FAILS LOUDLY rather than silently resolving hits against
+    hitboxes nobody tuned.
 
     HARD CONSTRAINT (enforced at construction):
         windowSeconds must be <= Constants.LagCompensationWindowMs / 1000.
@@ -50,7 +55,10 @@ HitDetectionCore.__index = HitDetectionCore
 -- SampleInterval, so it can never evict a still-live sample.
 local MAX_SAMPLE_HZ = 240
 
--- config = { WindowSeconds, SampleInterval, Enums }
+-- config = { WindowSeconds, SampleInterval, Enums, RegionProfile }
+--   RegionProfile = a rig profile from shared/Config/RigProfile.lua: a LIST of
+--   { region, offsetX?, offsetY, offsetZ?, radius } rows, all offsets relative
+--   to the recorded TORSO CENTRE. Required — see the header.
 function HitDetectionCore.new(config)
 	assert(
 		config.WindowSeconds <= 0.2,
@@ -58,20 +66,50 @@ function HitDetectionCore.new(config)
 			math.round(config.WindowSeconds * 1000)
 		)
 	)
+	local profile = config.RegionProfile
+	assert(
+		type(profile) == "table" and type(profile.regions) == "table",
+		"HitDetectionCore.new requires config.RegionProfile (see shared/Config/RigProfile.lua) — "
+			.. "without it the server would resolve hits against hitboxes nobody tuned (Q1-3)"
+	)
 	local self = setmetatable({}, HitDetectionCore)
 	self.WindowSeconds = config.WindowSeconds
 	self.SampleInterval = config.SampleInterval
 	self.Enums = config.Enums
+	self.RegionProfile = profile
+
+	-- Validate the injected rig once, at construction: a typo'd region name or
+	-- a missing radius would otherwise show up as "that player is bulletproof".
+	local known = {}
+	for _, region in self.Enums.HitRegion do
+		known[region] = true
+	end
+	for _, row in profile.regions do
+		assert(
+			known[row.region],
+			("HitDetectionCore: rig profile %q has unknown region %q"):format(
+				tostring(profile.name),
+				tostring(row.region)
+			)
+		)
+		assert(
+			type(row.radius) == "number" and row.radius > 0,
+			("HitDetectionCore: rig profile %q region %s needs a positive radius"):format(
+				tostring(profile.name),
+				tostring(row.region)
+			)
+		)
+		assert(
+			type(row.offsetY) == "number",
+			("HitDetectionCore: rig profile %q region %s needs offsetY"):format(
+				tostring(profile.name),
+				tostring(row.region)
+			)
+		)
+	end
+
 	-- history[playerId] = { { t, x, y, z, yaw } sorted by t ascending }
 	self.history = {}
-	-- Head is ~3 studs above the root pivot for stock R6 characters;
-	-- torso spans the middle band; limbs around the sides. Phase 2 fits
-	-- these against real rigs (R6/R15) in CombatService.
-	self.RegionDefaults = {
-		[self.Enums.HitRegion.Head] = { offsetY = 3.0, radius = 0.55 },
-		[self.Enums.HitRegion.Torso] = { offsetY = 1.15, radiusX = 1.15, radiusZ = 0.75, halfHeight = 0.95 },
-		[self.Enums.HitRegion.Limbs] = { offsetY = 0.0, radius = 0.4 },
-	}
 	return self
 end
 
@@ -150,26 +188,24 @@ end
 --[[
     Build the region candidates for a player from a rewind snapshot.
     @param playerId
-    @param snap {t,x,y,z,yaw}
-    @param regionSizes optional per-region override table (Phase 2 rig fitting)
-    @return { {id, region, x, y, z, radius} , ... } — sphere hitboxes
+    @param snap {t,x,y,z,yaw} — the recorded TORSO CENTRE (RigProfile)
+    @param regionProfile optional rig override; defaults to the injected rig
+    @return { {id, region, x, y, z, radius} , ... } — sphere hitboxes, one row
+        per region in the profile (limbs are four spheres, not one)
 ]]
-function HitDetectionCore:BuildCandidates(playerId, snap, regionSizes)
-	local sizes = regionSizes or self.RegionDefaults
+function HitDetectionCore:BuildCandidates(playerId, snap, regionProfile)
+	assert(snap ~= nil, "BuildCandidates requires a snapshot (a nil one means 'outside the rewind window')")
+	local profile = regionProfile or self.RegionProfile
+	local regions = profile.regions or profile
 	local candidates = {}
-	for region, geo in sizes do
-		local cx, cy, cz = snap.x, snap.y, snap.z
-		local radius = geo.radius or geo.radiusX -- sphere approximates boxes in MVP
-		-- All regions offset vertically from the root pivot in MVP (Phase 2
-		-- fits these against real R6/R15 rigs in CombatService).
-		cy = snap.y + geo.offsetY
+	for _, row in regions do
 		table.insert(candidates, {
 			id = playerId,
-			region = region,
-			x = cx,
-			y = cy,
-			z = cz,
-			radius = radius,
+			region = row.region,
+			x = snap.x + (row.offsetX or 0),
+			y = snap.y + row.offsetY,
+			z = snap.z + (row.offsetZ or 0),
+			radius = row.radius,
 		})
 	end
 	return candidates

@@ -142,6 +142,19 @@ local Weapons = {
 	Order = { "Viper9", "CQB2", "ARC5", "Longshot", "Talon" },
 	FreeWeapons = { "Viper9", "Talon" },
 	PurchasableWeapons = { "CQB2", "ARC5", "Longshot" },
+
+	-- §5.3 issue rule, BY ID: the free sidearm and melee handed out every
+	-- round. EconomyLedger reads THESE, never Order[1]/Order[5] — a pruned or
+	-- reordered menu list used to silently issue whatever sat at that index
+	-- (readiness notes §5).
+	Issued = { sidearm = "Viper9", melee = "Talon" },
+
+	-- The Alpha PURCHASE list (alpha-weapon-plan.md §4 + the lead's ruling):
+	-- the Alpha menu is Viper-9 (issued free) + CQB-2 1200 + ARC-5 2700, plus
+	-- the Light Vest 650 from Combat/Economy. Longshot Mk.II and Talon stay in
+	-- this file (their mechanics are deferred, not cancelled) but are NOT
+	-- purchasable in Alpha — so the A6 buy menu and this config cannot drift.
+	AlphaPurchasable = { "CQB2", "ARC5" },
 }
 
 function Weapons.GetWeapon(id)

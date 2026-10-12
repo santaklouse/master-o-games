@@ -43,6 +43,9 @@ local Constants = {
 	-- HARD CONSTRAINT: rewind window MUST be <= 200 ms.
 	LagCompensationWindowMs = 200,
 	LagCompensationSampleInterval = 0.1, -- record a position sample every 100 ms
+	-- Hitscan ray length: nothing past this can be hit, so the ray always has a
+	-- finite length (the map's longest honest sightline is ~57 studs).
+	HitscanMaxRangeStuds = 300,
 
 	-- §7 BEACON objective (Phase 2 consumes; values frozen here so the
 	-- objective logic and the round timer agree from day one).

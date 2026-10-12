@@ -60,6 +60,11 @@ local core = HitDetectionCore.new({
 	WindowSeconds = Shared.Constants.LagCompensationWindowMs / 1000, -- <= 0.2 enforced inside
 	SampleInterval = Shared.Constants.LagCompensationSampleInterval,
 	Enums = Shared.Enums,
+	-- The ONE place that says where a body is (torso-centre-relative). Injected,
+	-- not built in: the old built-in offsets disagreed with what the recorder
+	-- below writes, so chest shots missed and "headshots" aimed above the head
+	-- (Q1-3). HitDetectionCore now refuses to construct without a rig.
+	RegionProfile = Shared.RigProfile.R6,
 })
 
 local damageModel = DamageModel.new({
@@ -69,7 +74,7 @@ local damageModel = DamageModel.new({
 })
 
 -- Tuning (Phase 2 flags; see GDD §10.4 / §13)
-local HITSCAN_MAX_RANGE_STUDS = 300
+local HITSCAN_MAX_RANGE_STUDS = Shared.Constants.HitscanMaxRangeStuds
 local MAX_ORIGIN_DISTANCE_FROM_HEAD_STUDS = 8 -- client camera vs head drift tolerance
 -- Clock-skew allowance for a client timestamp that is slightly AHEAD of the
 -- server's. Inside this band we clamp to `now`; beyond it we reject the shot
@@ -100,21 +105,40 @@ end
     HitDetectionCore documents:
         worldQuery(ox,oy,oz,dx,dy,dz,maxDistance) -> { distance, name } | nil
 
-    Characters are excluded from the query on purpose: player hitboxes are
-    resolved by HitDetectionCore against the REWOUND snapshots, never by the
-    engine. Without the exclusion a shooter's own body would eat every shot
-    (the ray starts at their head), and a victim's CURRENT character would
-    block shots aimed at their rewound position — lag-compensation false
-    cover. So the engine answers one question only: is there world geometry
-    in the way, and how far away is it?
+    NOT EVERY PART IS COVER. The exclusion list has two jobs:
+      1. Player characters are excluded on purpose: player hitboxes are
+         resolved by HitDetectionCore against the REWOUND snapshots, never by
+         the engine. Without it a shooter's own body would eat every shot (the
+         ray starts at their head) and a victim's CURRENT character would block
+         shots aimed at their rewound position — lag-compensation false cover.
+      2. Practice dummies, spawn pads and effect parts must never eat a bullet
+         meant for a player (readiness notes §9). A3b's dummies live in
+         Workspace.Dummies, the map's spawn pads in Workspace.Spawns, and the
+         VFX the art session pools in Workspace.FX — all three are excluded as
+         whole folders, so anything later parented into them is covered by
+         construction rather than by remembering to list it. (CanQuery = false
+         on a part is NOT enough: it is a property the engine honours, and a
+         future part can be built without it.)
 ]]
+local GEOMETRY_EXCLUDED_FOLDERS = { "Dummies", "Spawns", "FX" }
+
 local function newWorldQuery()
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	local ignore = {}
+	local function add(candidate)
+		if candidate ~= nil then
+			table.insert(ignore, candidate)
+		end
+	end
 	for _, player in Players:GetPlayers() do
 		if player.Character ~= nil then
-			table.insert(ignore, player.Character)
+			add(player.Character)
+		end
+	end
+	for _, folderName in GEOMETRY_EXCLUDED_FOLDERS do
+		if type(Workspace.FindFirstChild) == "function" then
+			add(Workspace:FindFirstChild(folderName))
 		end
 	end
 	params.FilterDescendantsInstances = ignore
@@ -140,15 +164,19 @@ end
 function CombatService:KnitStart()
 	-- Server-side movement recorder: keep a rolling history of every
 	-- character's position (10 Hz effective pruning; WindowSeconds cap).
+	-- The recorded frame is the TORSO CENTRE (RigProfile): `GetPivot()` is the
+	-- PrimaryPart centre, which for a stock R6/R15 character is the root part,
+	-- i.e. the torso centre. Every region offset in the rig profile is measured
+	-- from exactly this point, so a chest-height ray hits the torso (Q1-3).
 	RunService.Heartbeat:Connect(function()
 		local now = serverNow()
 		for _, player in Players:GetPlayers() do
 			local character = player.Character
 			if character then
 				local pivot = character:GetPivot()
-				local pos = pivot.Position
+				local centre = Shared.RigProfile.TorsoCentreFromPivot(pivot.Position)
 				local _, yaw = pivot:ToEulerAnglesYXZ()
-				core:Record(player.UserId, now, pos.X, pos.Y, pos.Z, yaw)
+				core:Record(player.UserId, now, centre.x, centre.y, centre.z, yaw)
 			end
 		end
 	end)
@@ -183,20 +211,34 @@ function CombatService.Client:FireRequest(player, payload)
 		return { ok = false, reason = "UNKNOWN_WEAPON" }
 	end
 
-	-- 3. Server-side fire-rate gate (RPM -> min interval). The client
-	-- predicts firing for feel; the server is the authority on how fast
-	-- a weapon can actually shoot. Both stamps come from serverNow().
-	local now = serverNow()
-	if weapon.fireRateRPM and weapon.fireRateRPM > 0 then
-		local minInterval = 60 / weapon.fireRateRPM
-		local last = lastFireAt[player.UserId]
-		if last and (now - last) < minInterval then
-			return { ok = false, reason = "RATE_LIMITED" }
-		end
-		lastFireAt[player.UserId] = now
+	-- 3. RANGED ONLY. A fire request is a bullet, so the weapon must be a ranged
+	-- weapon carrying a positive fireRateRPM. Stated once, here, where the rest
+	-- of the validation lives, because the hole it closes was silent: the free
+	-- melee (Weapons.Talon, class "Melee") is issued to every player every round,
+	-- it has no fireRateRPM field at all, and the rate gate below was written as
+	-- `if weapon.fireRateRPM and ...` — so the gate was SKIPPED for it and the
+	-- ranged hitscan resolved a knife at the full hitscan range (300 studs),
+	-- unlimited times per second, without the player buying anything. "No RPM" is
+	-- never "no limit"; a melee weapon has no ranged fire at all (A3b owns melee).
+	if weapon.class == "Melee" or not (weapon.fireRateRPM and weapon.fireRateRPM > 0) then
+		return { ok = false, reason = "NOT_A_RANGED_WEAPON" }
 	end
 
-	-- 4. Sanitize the ray. The server resolves the hit itself; the client
+	-- 4. Server-side fire-rate gate (RPM -> min interval). UNCONDITIONAL: step 3
+	-- has already proved fireRateRPM is a positive number, so every weapon that
+	-- reaches this line is rate-limited — the guard and the gate cannot drift
+	-- apart again. The client predicts firing for feel; the server is the
+	-- authority on how fast a weapon can actually shoot. Both stamps come from
+	-- serverNow().
+	local now = serverNow()
+	local minInterval = 60 / weapon.fireRateRPM
+	local last = lastFireAt[player.UserId]
+	if last and (now - last) < minInterval then
+		return { ok = false, reason = "RATE_LIMITED" }
+	end
+	lastFireAt[player.UserId] = now
+
+	-- 5. Sanitize the ray. The server resolves the hit itself; the client
 	-- payload only suggests where the camera pointed. fireTime is a
 	-- server-clock timestamp (Workspace:GetServerTimeNow() on the client,
 	-- the same domain this service records in); anything outside the
@@ -235,6 +277,17 @@ function CombatService.Client:FireRequest(player, payload)
 	if type(origin) ~= "table" or type(dir) ~= "table" then
 		return { ok = false, reason = "BAD_RAY" }
 	end
+	-- Every component must be a real number. A table is not a ray: a payload
+	-- whose components are nil (the shipped client bug of 2026-09-30 sent
+	-- `{x = nil, y = nil, z = nil}`, i.e. an empty table over the wire) used to
+	-- reach the hitscan and error on the arithmetic. Refuse it here, once,
+	-- where every other payload check lives — the client gets a reason instead
+	-- of a thrown remote.
+	for _, component in { origin.x, origin.y, origin.z, dir.x, dir.y, dir.z } do
+		if type(component) ~= "number" then
+			return { ok = false, reason = "BAD_RAY" }
+		end
+	end
 
 	-- Origin sanity: the in-world origin must sit near the shooter's own
 	-- character (head). Keeps forged origins from becoming "no-clip" rays.
@@ -251,7 +304,7 @@ function CombatService.Client:FireRequest(player, payload)
 		end
 	end
 
-	-- 5. Lag-compensated hit resolution (the actual milestone), with the
+	-- 6. Lag-compensated hit resolution (the actual milestone), with the
 	-- world-geometry cover test inside the same ray.
 	-- NOTE: Knit binds Client methods with Client.Server = the service, so
 	-- self.Server is CombatService; _ResolveHit lives on the service.
@@ -287,6 +340,12 @@ function CombatService.Client:FireRequest(player, payload)
 	local victimArmor = Knit.GetService("PlayerState"):GetArmor(hit.id)
 	local resolved = damageModel:ResolveRangedHit(weaponId, range, hit.region, victimArmor)
 	local applied = Knit.GetService("PlayerState"):ApplyDamage(hit.id, resolved.damage, player.UserId, weaponId)
+	if applied.applied == false then
+		-- The victim left the registry between the candidate scan and the write
+		-- (a leave, a round reset). Refuse: the server never invents health for
+		-- an id it does not seat (readiness notes §7).
+		return { ok = false, reason = "TARGET_NOT_REGISTERED", fireTime = fireTime }
+	end
 
 	-- 7. Consequences: kill credit + elimination report.
 	local balance = nil
@@ -353,8 +412,12 @@ function CombatService:_ResolveHit(shooterId, origin, dir, fireTime)
 		if victimId ~= shooterId then
 			local victimTeam = Knit.GetService("Match"):GetPlayerTeam(victimId)
 			if victimTeam ~= nil and victimTeam ~= shooterTeam then
-				-- Only living, currently-tracked opponents can be hit.
-				if playerState:IsAlive(victimId) then
+				-- Only SEATED, living, currently-tracked opponents can be hit.
+				-- IsRegistered is the gate that matters: IsAlive is false both
+				-- for "dead" and for "never seated", and a player the server
+				-- never registered must not be hittable at all (readiness
+				-- notes §7 — the ghost-state defect class behind match #2's DEAD).
+				if playerState:IsRegistered(victimId) and playerState:IsAlive(victimId) then
 					local snap = core:GetSnapshotAt(victimId, fireTime)
 					if snap ~= nil then
 						local built = core:BuildCandidates(victimId, snap)

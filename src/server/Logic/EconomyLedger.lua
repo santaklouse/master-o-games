@@ -1,25 +1,25 @@
 --!strict
 --[[
-	EconomyLedger — server-side credit + loadout registry (GDD §5, exact).
-	Owns one match's worth of economy state:
+    EconomyLedger — server-side credit + loadout registry (GDD §5, exact).
+    Owns one match's worth of economy state:
 
-	§5.1 awards (per player, per event)
-		win +3000 | loss +1500 | kill +300 | plant +500 | disable +500
-		interest: NONE
-	§5.2 prices
-		Viper-9/Talon free (issued every round), CQB-2 1200, ARC-5 2700,
-		Longshot 2900, Light Vest 650, Full Kit 1000
-	§5.3 persistence rules (the dev contract)
-		credits persist across rounds, reset at match end
-		purchased weapons/armor reset EVERY round (rental model)
-		no team-buy assist, no weapon drops (both deferred)
+    §5.1 awards (per player, per event)
+        win +3000 | loss +1500 | kill +300 | plant +500 | disable +500
+        interest: NONE
+    §5.2 prices
+        Viper-9/Talon free (issued every round), CQB-2 1200, ARC-5 2700,
+        Longshot 2900, Light Vest 650, Full Kit 1000
+    §5.3 persistence rules (the dev contract)
+        credits persist across rounds, reset at match end
+        purchased weapons/armor reset EVERY round (rental model)
+        no team-buy assist, no weapon drops (both deferred)
 
-	Anti-exploit rails (enforced here, independently of the service layer):
-		- award amounts come from the Economy config table only
-		- NO method on this ledger creates credits out of thin air
-		- purchases reject on insufficient balance (never negative balance)
+    Anti-exploit rails (enforced here, independently of the service layer):
+        - award amounts come from the Economy config table only
+        - NO method on this ledger creates credits out of thin air
+        - purchases reject on insufficient balance (never negative balance)
 
-	Pure Luau, zero internal requires (config injected).
+    Pure Luau, zero internal requires (config injected).
 ]]
 
 local EconomyLedger = {}
@@ -122,6 +122,12 @@ function EconomyLedger:PurchaseWeapon(playerId, weaponId)
 		-- Free weapons are issued, not purchased (see IssueFreeLoadout)
 		return { ok = false, reason = "FREE_ITEM" }
 	end
+	if w.slot ~= "Primary" and w.slot ~= "Sidearm" and w.slot ~= "Melee" then
+		-- Guard the mid-purchase path: a weapon with no loadout slot would take
+		-- the credits and grant nothing, and there is NO refund path (WORKFLOW
+		-- "No refunds"), so it is refused before any money moves.
+		return { ok = false, reason = "UNKNOWN_ITEM" }
+	end
 	if w.slot == "Primary" and p.loadout.primary ~= nil then
 		return { ok = false, reason = "ALREADY_OWNED" }
 	end
@@ -163,10 +169,28 @@ function EconomyLedger:PurchaseArmor(playerId, armorId)
 end
 
 -- §5.3 rental model: issued free every round, then purchases reset.
+-- The ids come from the Weapons config's `Issued` row. NEVER Order[1]/Order[5]:
+-- the menu list is a presentation order, and indexing it meant a pruned or
+-- reordered list silently issued the wrong free weapon (readiness §5).
 function EconomyLedger:IssueFreeLoadout(playerId)
 	local p = self:_ensure(playerId)
-	p.loadout.sidearm = self.Weapons.Order[1] -- Viper-9 (index-ordered free sidearm)
-	p.loadout.melee = self.Weapons.Order[5] -- Talon
+	local issued = self.Weapons.Issued
+	assert(
+		type(issued) == "table",
+		"EconomyLedger requires Weapons.Issued (the free sidearm/melee ids) — do not index Weapons.Order"
+	)
+	for _, slot in { "sidearm", "melee" } do
+		local id = issued[slot]
+		assert(
+			type(id) == "string" and self.Weapons[id] ~= nil,
+			("EconomyLedger: Weapons.Issued.%s is %q, which is not a weapon in the catalogue"):format(
+				slot,
+				tostring(id)
+			)
+		)
+	end
+	p.loadout.sidearm = issued.sidearm
+	p.loadout.melee = issued.melee
 	return p.loadout
 end
 
