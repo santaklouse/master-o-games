@@ -116,6 +116,13 @@ local KEY_WEAPONS = {
 }
 local KEY_CHEAPEST = Enum.KeyCode.B
 local BUY_TAG = "[Buy]"
+-- Firing feedback (see "The print contract for firing" below).
+local FIRE_TAG = "[Fire]"
+-- Holding a mouse button or a buy key must not flood the output: one line per
+-- outcome, but no more than one line per FIRE_LOG_MIN_INTERVAL seconds. This
+-- throttles the PRINTING only — the server's own RPM gate stays the authority
+-- on how fast a weapon may actually shoot.
+local FIRE_LOG_MIN_INTERVAL = 0.25
 -- The Alpha shop by id, built once from config. An id that is in the list but
 -- missing from the catalogue is dropped here (and refused at press time) rather
 -- than becoming a request the server answers UNKNOWN_ITEM.
@@ -147,6 +154,7 @@ function CombatController:KnitInit()
 	self.phase = nil -- last phase the server reported (Enums.Phase)
 	self.loadout = nil -- last loadout the server reported
 	self.equipped = nil -- weaponId in hand, or nil
+	self._lastFireLogAt = nil -- os.clock() of the last fire line printed
 	self._services = {
 		Match = Knit.GetService("Match"),
 		Economy = Knit.GetService("Economy"),
@@ -170,7 +178,16 @@ end
 
 function CombatController:KnitStart()
 	self:_refresh()
-	UserInputService.InputBegan:Connect(function(input)
+	-- `gameProcessedEvent` is the engine's word for "something in the GUI
+	-- already consumed this input" (the chat bar, a text box, CoreGui, the
+	-- escape menu). Ignoring it meant a click or a key that went to CHAT still
+	-- reached TryFire / TryBuyKey — and with 1 / 2 / B live as buy keys, typing
+	-- a message containing those keys would BUY a weapon. The guard is first
+	-- for that reason: nothing in this controller runs on a consumed input.
+	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+		if gameProcessedEvent then
+			return
+		end
 		if input.UserInputType == FIRE_INPUT then
 			self:TryFire()
 		elseif input.UserInputType == BUY_INPUT then
@@ -345,10 +362,68 @@ end
 -- Firing ---------------------------------------------------------------------
 
 --[[
+    THE PRINT CONTRACT FOR FIRING. The kill feed and the round banner do not
+    exist yet (A5/UI-2), so this one line IS the player's whole feedback loop,
+    and until now there was none: TryFire's return value was discarded at the
+    call site, which made "the server refused the shot" (DEAD, RATE_LIMITED,
+    NOT_OWNED, NOT_A_RANGED_WEAPON, STALE_FIRE_TIME) indistinguishable from "I
+    missed" — and both indistinguishable from "nothing is wired up at all".
+    One line per outcome now says which of those it was, throttled so holding
+    the mouse button cannot flood the output.
+]]
+function CombatController:_logFire(message)
+	local now = os.clock()
+	if self._lastFireLogAt ~= nil and (now - self._lastFireLogAt) < FIRE_LOG_MIN_INTERVAL then
+		return
+	end
+	self._lastFireLogAt = now
+	print(("%s %s"):format(FIRE_TAG, message))
+end
+
+-- A weapon's display name for the log line, falling back to the id: a config
+-- drift must not turn a feedback line into an error.
+function CombatController:_weaponLabel(weaponId)
+	local weapon = Shared.Weapons[weaponId]
+	if type(weapon) == "table" and type(weapon.name) == "string" then
+		return weapon.name
+	end
+	return tostring(weaponId)
+end
+
+-- The server's answer, in one line: refused (with the reason), fired without a
+-- hit, or a hit (with region, damage and distance).
+function CombatController:_logFireOutcome(weaponId, result)
+	local label = self:_weaponLabel(weaponId)
+	if not result.ok then
+		self:_logFire(("%s refused by the server: %s"):format(label, tostring(result.reason)))
+		return
+	end
+	local hit = result.hit
+	if type(hit) ~= "table" then
+		self:_logFire(("%s fired - no hit (%s)"):format(label, tostring(result.reason)))
+		return
+	end
+	local line = ("%s hit %s for %s damage (%.1f studs)"):format(
+		label,
+		tostring(hit.region),
+		tostring(result.damage),
+		tonumber(hit.distance) or 0
+	)
+	if result.lethal then
+		line ..= " - target eliminated"
+	end
+	self:_logFire(line)
+end
+
+--[[
     The ONE entry point for "this player pulled the trigger". Returns the
     server's result table, or nil when the shot never left the client (outside
-    ACTION, nothing equipped, no character or camera to aim from). Silence is
-    deliberate: this runs on every click, so it never warns.
+    ACTION, nothing equipped, no character or camera to aim from).
+
+    The phase gate stays SILENT on purpose (outside ACTION a click is expected,
+    not an error) — but every other outcome prints one throttled line, including
+    the two local drops, because "I clicked and nothing happened" is exactly the
+    state this build must never leave the player in.
 ]]
 function CombatController:TryFire()
 	if self.phase ~= Shared.Enums.Phase.Action then
@@ -356,10 +431,14 @@ function CombatController:TryFire()
 	end
 	local weaponId = self.equipped
 	if weaponId == nil or Shared.Weapons[weaponId] == nil then
+		self:_logFire("nothing equipped - no request sent")
 		return nil
 	end
 	local aim = self:_aim()
 	if aim == nil then
+		self:_logFire(
+			("%s: no character head or camera to aim from - no request sent"):format(self:_weaponLabel(weaponId))
+		)
 		return nil
 	end
 	local ok, result = pcall(function()
@@ -372,9 +451,11 @@ function CombatController:TryFire()
 			dir = { x = aim.dir.X, y = aim.dir.Y, z = aim.dir.Z },
 		})
 	end)
-	if not ok then
+	if not ok or type(result) ~= "table" then
+		self:_logFire(("%s: no answer from the server - nothing resolved"):format(self:_weaponLabel(weaponId)))
 		return nil
 	end
+	self:_logFireOutcome(weaponId, result)
 	return result
 end
 

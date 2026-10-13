@@ -1044,16 +1044,26 @@ function H.bootClient(options)
         return H.clientKnit._controllers[name]
     end
     -- A real mouse click: UserInputService.InputBegan carrying MouseButton1,
-    -- the same input object the engine delivers (A3a firing seam).
-    function H.client.click()
-        userInput.InputBegan:Fire({ UserInputType = EnumStub.UserInputType.MouseButton1 })
+    -- the same input object the engine delivers (A3a firing seam). `processed`
+    -- is the engine's SECOND argument, gameProcessedEvent: true means the chat
+    -- bar / a text box / CoreGui already consumed the input. It is optional and
+    -- defaults to false, so every existing H.client.click() caller is unchanged
+    -- (P2B widened the seam: the guard was untestable while the harness fired
+    -- InputBegan with a single argument).
+    function H.client.click(processed)
+        userInput.InputBegan:Fire({ UserInputType = EnumStub.UserInputType.MouseButton1 }, processed == true)
     end
     -- A real key press: InputBegan carrying UserInputType.Keyboard + a KeyCode,
     -- exactly the shape the engine delivers (A3a buy keys). H.client.KeyCode is
-    -- the same enum table the controller binds against.
+    -- the same enum table the controller binds against. `processed` is the same
+    -- gameProcessedEvent seam as H.client.click — a key typed into chat must not
+    -- reach the buy keys.
     H.client.KeyCode = EnumStub.KeyCode
-    function H.client.key(keyCode)
-        userInput.InputBegan:Fire({ UserInputType = EnumStub.UserInputType.Keyboard, KeyCode = keyCode })
+    function H.client.key(keyCode, processed)
+        userInput.InputBegan:Fire(
+            { UserInputType = EnumStub.UserInputType.Keyboard, KeyCode = keyCode },
+            processed == true
+        )
     end
     -- Point the local player's camera at a look vector from a position; the
     -- controller reads .Position/.LookVector exactly as it reads real Vector3s.
