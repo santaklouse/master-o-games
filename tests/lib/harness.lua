@@ -273,8 +273,9 @@ end
 EnumStub = {
     RaycastFilterType = { Exclude = "Exclude" },
     UserInputType = { MouseButton1 = "MouseButton1", MouseButton2 = "MouseButton2", Keyboard = "Keyboard" },
-    -- Only the key codes the A3a buy keys bind (CombatController's KEY_WEAPONS).
-    KeyCode = { One = "One", Two = "Two", B = "B" },
+    -- Only the key codes the client binds: the A3a buy keys (KeyCode.One /
+    -- KeyCode.Two / KeyCode.B) and the P2B rematch key (KeyCode.R).
+    KeyCode = { One = "One", Two = "Two", B = "B", R = "R" },
 }
 
 local function loadNode(node)

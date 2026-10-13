@@ -2058,6 +2058,222 @@ test("the free melee cannot be fired as a 300-stud hitscan (NOT_A_RANGED_WEAPON)
 end)
 
 -- ==========================================================================
+section("P2B — the solo (one-player) Alpha session")
+-- ==========================================================================
+-- The Alpha run is TeamSize 2 / PlayersToStart 1 (Shared.AlphaRun), so ONE
+-- human is a legal session: the practice start. That is the case this section
+-- exists for — the client tree is booted with a single pre-joined player (the
+-- local player, id 101, exactly what Studio Play's Play button produces) and
+-- everything is driven through REAL input (UserInputService.InputBegan) and the
+-- REAL server path. Nothing below calls a service method the game does not.
+--
+-- One lone player through the practice start. The local player is 101 and he is
+-- the only entry in Players when the server chunk runs (H.boot's preJoinPlayers
+-- = 1, plus the alpha run config so PlayersToStart is 1).
+local function soloClient()
+    local client = H.bootClient({ server = { preJoinPlayers = 1, runConfig = "alpha" } })
+    check(client.bootOk, "init.client.lua failed to run: " .. tostring(client.bootErr))
+    check(client.initError == nil, "a controller's KnitInit errored: " .. tostring(client.initError))
+    check(client.flushError == nil, "a controller's KnitStart errored: " .. tostring(client.flushError))
+    return client, client.controller("Combat")
+end
+
+-- Win rounds by SURVIVING them: the no-plant fallback would crown the empty
+-- side, so the round goes to the side still standing (P2B round resolution).
+-- Returns the snapshot after `count` rounds have resolved and the interstitial
+-- has ticked out — which is LOBBY when one of them ended the match.
+local function soloWinRounds(client, count)
+    for _ = 1, count do
+        H.advance(Constants.BuyPhaseDuration)
+        eq(H.snapshot().phase, Enums.Phase.Action, "the round is live")
+        H.advance(Constants.RoundDuration + 1)
+        eq(H.snapshot().phase, Enums.Phase.RoundEnd, "the round resolved on the timer")
+        H.advance(Constants.RoundEndPause + 0.1)
+    end
+    return H.snapshot()
+end
+
+test("the practice start: one player leaves LOBBY, reaches ACTION and his click fires", function()
+    local client, controller = soloClient()
+    -- THE DEFECT: the FSM only ever asked "are both teams full", so a lone player
+    -- sat in LOBBY forever — the phase never moved, TryFire dropped every click at
+    -- its phase gate and the server would have answered NOT_IN_ACTION.
+    local boot = H.snapshot()
+    check(
+        boot.phase ~= Enums.Phase.Lobby,
+        "one seated player must move the Alpha run out of LOBBY, got " .. tostring(boot.phase)
+    )
+    eq(boot.phase, Enums.Phase.BuyPhase, "and into the pistol round's buy phase")
+    eq(controller.phase, Enums.Phase.BuyPhase, "which the client read back from the server, not from a timer")
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "the buy phase ticks out into ACTION")
+    eq(controller.phase, Enums.Phase.Action, "the controller followed the server")
+    eq(controller.equipped, "Viper9", "the round's free sidearm is what is in hand")
+    -- A real click on a real body, through the real client tree.
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.advance(0)
+    H.client.aim(0, PIVOT_Y + 1.5, 0, 0, 0, -1)
+    local before, beforeLines = #client.calls, #H.prints
+    H.client.click()
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, before, "Combat:FireRequest"),
+        1,
+        "one click -> one fire request down the server path (" .. table.concat(client.calls, ", ") .. ")"
+    )
+    check(#linesSince(beforeLines) >= 1, "and the click reported its outcome: no silent click")
+    -- The server RESOLVED the shot (it is MISS, not NOT_IN_ACTION): a lone
+    -- player has nobody to shoot, but the round he is in is live.
+    H.advance(0.3) -- past the Viper-9's 240 RPM gate
+    local shot = controller:TryFire()
+    check(shot ~= nil and shot.ok == true, "the trigger path returns the server's answer: " .. tostring(shot and shot.reason))
+    eq(shot.weaponId, "Viper9", "the shot is attributed to the weapon in hand")
+    check(shot.reason ~= "NOT_IN_ACTION", "the server resolved the shot instead of gating the phase: " .. tostring(shot.reason))
+    eq(client.flushError, nil, "and the client tree is healthy")
+end)
+
+test("a solo round resolves and the loop continues: credits carried, rentals reset", function()
+    local client, controller = soloClient()
+    local economy = H.service("Economy")
+    local roundTwo = soloWinRounds(client, 1)
+    eq(roundTwo.phase, Enums.Phase.BuyPhase, "the round resolved and the next buy phase opened")
+    eq(roundTwo.round, 2, "round 2")
+    local last = roundTwo.roundHistory[#roundTwo.roundHistory]
+    eq(#roundTwo.roundHistory, 1, "one round in the history")
+    eq(last.winner, Constants.Teams.Raiders, "the lone player's side took the round")
+    eq(
+        last.reason,
+        Enums.RoundEndReason.TeamEliminated,
+        "reason: the side the no-plant fallback would crown has nobody alive, so the side still standing takes it"
+    )
+    eq(economy:GetBalance(101), 3000, "the round win bonus is on the ledger in round 2")
+    -- Buy with a key, so the rental reset below has something real to reset.
+    local beforeLines = #H.prints
+    H.client.key(H.client.KeyCode.Two) -- ARC-5, 2700
+    H.advance(0)
+    eq(controller.equipped, "ARC5", "the bought Alpha rifle is what is in hand: " .. table.concat(linesSince(beforeLines), " | "))
+    eq(economy:GetBalance(101), 300, "the server charged the config price")
+    -- Round 2: the lone player dies. The round goes the other way, and the loop
+    -- must carry on into round 3's buy phase anyway.
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "round 2 is live")
+    H.kill(101)
+    eq(H.snapshot().phase, Enums.Phase.RoundEnd, "the elimination resolved round 2")
+    H.advance(Constants.RoundEndPause + 0.1)
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "and the loop continued into round 3's buy phase")
+    eq(H.snapshot().round, 3, "round 3")
+    eq(economy:GetBalance(101), 1800, "credits carried across the round boundary (300 + the 1500 loss bonus)")
+    local loadout = economy:GetLoadout(101)
+    eq(loadout.primary, nil, "the rental is gone: a buy phase starts from nothing but the free kit")
+    eq(loadout.sidearm, "Viper9", "and the free sidearm is re-issued")
+    eq(controller.equipped, "Viper9", "the client re-read the reset loadout from the server, not from its own memory")
+    eq(client.flushError, nil, "the client tree is still healthy after three rounds")
+end)
+
+test("a click the GUI already consumed fires nothing (gameProcessedEvent guard)", function()
+    local client, controller = soloClient()
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "ACTION")
+    eq(controller.phase, Enums.Phase.Action, "the controller is in ACTION too")
+    H.setCharacter(101, 0, PIVOT_Y, 0)
+    H.advance(0)
+    H.client.aim(0, PIVOT_Y + 1.5, 0, 0, 0, -1)
+    -- The chat bar / a text box / CoreGui consumed this input: not one line of
+    -- this controller may run for it.
+    local before, beforeLines = #client.calls, #H.prints
+    H.client.click(true)
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, before, "Combat:FireRequest"),
+        0,
+        "a consumed click sends no fire request (" .. table.concat(client.calls, ", ") .. ")"
+    )
+    eq(#linesSince(beforeLines), 0, "and prints nothing at all")
+    -- Control: the SAME click, unprocessed, does fire — so the negative above is
+    -- the guard and not a dead input path.
+    H.client.click(false)
+    H.advance(0)
+    eq(callsNamed(client.calls, before, "Combat:FireRequest"), 1, "the same click unprocessed does fire")
+    eq(client.flushError, nil, "and nothing in the guard errored")
+end)
+
+test("a processed key press does not buy (the buy keys share the handler)", function()
+    local client, controller = soloClient()
+    local economy = H.service("Economy")
+    soloWinRounds(client, 1) -- round 2's wallet: 3000 credits
+    eq(economy:GetBalance(101), 3000, "the round 2 wallet can afford the entry rifle")
+    local before, beforeLines = #client.calls, #H.prints
+    -- Typing "1" into chat must not buy a rifle: the key press is consumed.
+    H.client.key(H.client.KeyCode.One, true)
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, before, "Economy:RequestPurchase"),
+        0,
+        "a consumed key sends no purchase request (" .. table.concat(client.calls, ", ") .. ")"
+    )
+    eq(#linesSince(beforeLines), 0, "and prints no line")
+    eq(economy:GetBalance(101), 3000, "and the ledger never moved")
+    eq(controller.loadout.primary, nil, "and nothing was granted")
+    -- Control: the same key, unprocessed, buys the entry rifle.
+    H.client.key(H.client.KeyCode.One, false)
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, before, "Economy:RequestPurchase"),
+        1,
+        "the same key unprocessed buys: " .. table.concat(linesSince(beforeLines), " | ")
+    )
+    eq(economy:GetBalance(101), 1800, "and the ledger moved by the config price")
+    eq(controller.loadout.primary, "CQB2", "and the primary is on the ledger")
+    eq(client.flushError, nil, "no error spam out of the refused key")
+end)
+
+test("the R key casts the rematch vote, so a solo player can start match #2", function()
+    local client, controller = soloClient()
+    local economy = H.service("Economy")
+    -- Not the end screen: in the first lobby's buy phase R is not ours to
+    -- answer, so it is silent and sends nothing.
+    eq(H.snapshot().phase, Enums.Phase.BuyPhase, "round 1 of match #1 is in the buy phase")
+    local before, beforeLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.R)
+    H.advance(0)
+    eq(callsNamed(client.calls, before, "Match:RequestRematchVote"), 0, "R in the buy phase sends nothing")
+    eq(#linesSince(beforeLines), 0, "and prints nothing")
+    -- Play match #1 out: three round wins ends it (Alpha WinScore = 3).
+    local lobby = soloWinRounds(client, 3)
+    eq(lobby.phase, Enums.Phase.Lobby, "the match ends back in LOBBY, where auto-start waits for a vote")
+    eq(lobby.scores.Raiders, 3, "3-0 Raiders")
+    eq(lobby.rematchVotesRequired, 1, "one vote is what a lone player owes")
+    eq(lobby.rematchVotes, 0, "and nobody has cast it: no end screen exists yet")
+    eq(economy:GetBalance(101), 0, "the match end wiped the match-scoped credits (§5.3)")
+    -- THE DEAD END: without this key there is no way out of that lobby at all.
+    before, beforeLines = #client.calls, #H.prints
+    H.client.key(H.client.KeyCode.R)
+    H.advance(0)
+    eq(
+        callsNamed(client.calls, before, "Match:RequestRematchVote"),
+        1,
+        "R at the end of a match casts the vote (" .. table.concat(client.calls, ", ") .. ")"
+    )
+    local line = oneLine(linesSince(beforeLines))
+    check(line:find("rematch vote cast", 1, true) ~= nil, "one plain line says the vote was cast: " .. line)
+    local nextMatch = H.snapshot()
+    eq(nextMatch.phase, Enums.Phase.BuyPhase, "and the vote starts match #2: the lobby is not a dead end")
+    eq(nextMatch.round, 1, "round 1 of match #2")
+    eq(nextMatch.scores.Raiders, 0, "with the score reset")
+    eq(nextMatch.rematchVotes, 0, "and the vote ledger cleared")
+    eq(economy:GetBalance(101), 0, "match #2 starts from the pistol round again")
+    eq(economy:GetLoadout(101).sidearm, "Viper9", "the free kit is re-issued")
+    check(
+        H.service("PlayerState"):GetHealth(101) > 0,
+        "and the lone player is re-registered for the round: he can be shot, not DEAD"
+    )
+    H.advance(Constants.BuyPhaseDuration)
+    eq(H.snapshot().phase, Enums.Phase.Action, "match #2's first round goes live")
+    eq(controller.phase, Enums.Phase.Action, "and the client followed it there")
+    eq(client.flushError, nil, "the client tree survived the whole rematch path")
+end)
+
+-- ==========================================================================
 print(("\n%d passed, %d failed"):format(passed, #failed))
 if #failed > 0 then
     for _, failure in failed do

@@ -116,6 +116,13 @@ local KEY_WEAPONS = {
 }
 local KEY_CHEAPEST = Enum.KeyCode.B
 local BUY_TAG = "[Buy]"
+-- The rematch key (see TryRematchVote below): after a match the FSM returns to
+-- LOBBY and auto-start waits for GetRematchVoteRequired() votes, which for a
+-- lone player is 1. The end screen that would cast it is A5's and A5 has not
+-- shipped, so without this key a solo session plays match #1 and then sits in
+-- the lobby forever. R is that way out; nothing else in the Alpha is bound to R.
+local KEY_REMATCH = Enum.KeyCode.R
+local MATCH_TAG = "[Match]"
 -- Firing feedback (see "The print contract for firing" below).
 local FIRE_TAG = "[Fire]"
 -- Holding a mouse button or a buy key must not flood the output: one line per
@@ -155,6 +162,7 @@ function CombatController:KnitInit()
 	self.loadout = nil -- last loadout the server reported
 	self.equipped = nil -- weaponId in hand, or nil
 	self._lastFireLogAt = nil -- os.clock() of the last fire line printed
+	self._atMatchEnd = false -- the server ended a match and is waiting for a rematch vote
 	self._services = {
 		Match = Knit.GetService("Match"),
 		Economy = Knit.GetService("Economy"),
@@ -174,6 +182,13 @@ function CombatController:KnitInit()
 	self._services.Economy.CreditsChanged:Connect(function()
 		self:_refreshLoadout()
 	end)
+	-- The end screen (A5) is what will own the rematch vote; until it exists the R
+	-- key does, and it has to know it is looking at the END of a match rather than
+	-- at the first lobby of a server session — the phase alone cannot tell them
+	-- apart, because MatchEnded puts the FSM back in LOBBY.
+	self._services.Match.MatchEnded:Connect(function()
+		self._atMatchEnd = true
+	end)
 end
 
 function CombatController:KnitStart()
@@ -191,7 +206,14 @@ function CombatController:KnitStart()
 		if input.UserInputType == FIRE_INPUT then
 			self:TryFire()
 		elseif input.UserInputType == BUY_INPUT then
-			self:TryBuyKey(input.KeyCode)
+			-- One handler, three keys: R is the rematch vote, 1 / 2 / B are the buy
+			-- keys (and every other key stays silent, which is why TryBuyKey ignores
+			-- KeyCodes it does not bind).
+			if input.KeyCode == KEY_REMATCH then
+				self:TryRematchVote()
+			else
+				self:TryBuyKey(input.KeyCode)
+			end
 		end
 	end)
 end
@@ -204,6 +226,11 @@ function CombatController:_refresh()
 	end)
 	if ok and type(snapshot) == "table" and snapshot.phase ~= nil then
 		self.phase = snapshot.phase
+		if self.phase ~= Shared.Enums.Phase.Lobby then
+			-- A live phase means the rematch vote was answered (or a new match is
+			-- already under way): the end screen is behind us.
+			self._atMatchEnd = false
+		end
 	end
 	self:_refreshLoadout()
 end
@@ -227,6 +254,11 @@ end
 -- One plain line, the only output this controller produces for shopping.
 function CombatController:_say(message)
 	print(("%s %s"):format(BUY_TAG, message))
+end
+
+-- Same print contract as _say, under the match tag.
+function CombatController:_sayMatch(message)
+	print(("%s %s"):format(MATCH_TAG, message))
 end
 
 --[[
@@ -413,6 +445,38 @@ function CombatController:_logFireOutcome(weaponId, result)
 		line ..= " - target eliminated"
 	end
 	self:_logFire(line)
+end
+
+--[[
+    The ONE entry point for "this player wants another match".
+
+    THE DEAD END THIS CLOSES (P2B, 2026-10). After a match the FSM returns to
+    LOBBY and auto-start waits for GetRematchVoteRequired() votes. Nothing on the
+    client ever cast one — the end screen is A5's work and has not shipped — so a
+    session could play match #1 and then sit in the lobby with no key, no menu and
+    no way forward. For a lone player that vote count is 1, so his own vote is
+    enough; he just had no way to cast it. R casts it through the same remote the
+    end screen will call. Silence when this is not the end screen (the first
+    lobby, the buy phase, a live round): the key is not ours to answer there, and
+    a key can be held down.
+]]
+function CombatController:TryRematchVote()
+	if not self._atMatchEnd then
+		return nil
+	end
+	local ok, result = pcall(function()
+		return self._services.Match.RequestRematchVote:InvokeAsync()
+	end)
+	if not ok or result == nil then
+		self:_sayMatch("the server did not answer the rematch vote")
+		return nil
+	end
+	if result == true then
+		self:_sayMatch("rematch vote cast")
+	else
+		self:_sayMatch("the server refused the rematch vote")
+	end
+	return result
 end
 
 --[[
