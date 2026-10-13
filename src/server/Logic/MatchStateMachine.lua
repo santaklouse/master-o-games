@@ -372,13 +372,39 @@ function MatchStateMachine:GetRematchVoteRequired()
 	return math.min(self.Constants.PlayersToStart, math.max(2, present))
 end
 
+--[[
+    START RULE (P2B solo start, 2026-10). The match starts when EITHER both teams
+    are full OR the SEATED player count reaches Constants.PlayersToStart.
+
+    `self.Constants` IS Shared.RunConfig — the GDD baseline with the AlphaRun
+    overlay applied — so this one rule reads TeamSize 5 / PlayersToStart 10 in
+    the shipped baseline run and TeamSize 2 / PlayersToStart 1 in the Alpha run,
+    with no second constant anywhere (the overlay is the only place a run number
+    lives).
+
+    Why the `or` and not just PlayersToStart: the two numbers mean different
+    things. TeamSize is how many SEATS a team has; PlayersToStart is how many
+    PLAYERS the run needs before it is worth starting. The Alpha practice start
+    (one human, teams not full) is exactly the case where the second is
+    satisfied and the first cannot be, and before this the FSM only ever looked
+    at the first, so a lone player sat in LOBBY forever: TryFire drops every
+    click at its phase gate and the server would answer NOT_IN_ACTION.
+
+    BASELINE IS UNTOUCHED, and not by luck: _AssignSlot fills Raiders to
+    TeamSize first and Wardens second, so a seated count of 10 (the baseline
+    PlayersToStart) is only reachable with BOTH teams already full — the `or`
+    never decides anything in the baseline run, and no baseline expectation
+    changes. It only decides when PlayersToStart < TeamSize * 2.
+]]
 function MatchStateMachine:_TryStartMatch()
 	if self.phase ~= self.Enums.Phase.Lobby then
 		return false
 	end
-	local teamsFull = self:GetTeamSize(self.Constants.Teams.Raiders) >= self.Constants.TeamSize
-		and self:GetTeamSize(self.Constants.Teams.Wardens) >= self.Constants.TeamSize
-	if not teamsFull then
+	local raiders = self:GetTeamSize(self.Constants.Teams.Raiders)
+	local wardens = self:GetTeamSize(self.Constants.Teams.Wardens)
+	local teamsFull = raiders >= self.Constants.TeamSize and wardens >= self.Constants.TeamSize
+	local enoughSeated = raiders + wardens >= self.Constants.PlayersToStart
+	if not (teamsFull or enoughSeated) then
 		return false
 	end
 	if self.requireRematchVotes and self:GetRematchVoteCount() < self:GetRematchVoteRequired() then
@@ -506,17 +532,52 @@ function MatchStateMachine:Tick(now)
 	end
 end
 
+--[[
+    §7.2.4 DEFAULT TIMEOUT RULE (P2B solo round, 2026-10) — evaluated when the
+    round timer (Constants.RoundDuration) expires.
+
+    Phase 1 ships no objective, so the GDD's no-plant fallback is "the Wardens
+    win" and that stays the rule. The one correction: the fallback must not
+    AWARD the round to a side that has no living players. In the Alpha run
+    config a lone human is the only living player on the map (TeamSize 2,
+    PlayersToStart 1 — no opponents until A3b's practice dummies land), so the
+    no-plant fallback would hand every 105 s round to an empty Wardens team: no
+    round win bonus, a loss he cannot influence, and a loop that reads broken.
+    When the side the fallback would crown has nobody alive and the other side
+    has somebody, the round goes to the side that is still standing, reason
+    TEAM_ELIMINATED — §7.2.1's own win condition ("all players of a team
+    eliminated -> the other team wins"), read at the timer instead of at the
+    moment of death. An empty team is eliminated in every sense; it just had
+    nobody to shoot.
+
+    This deliberately does NOT flip the winner of the baseline case where a team
+    is emptied during the buy phase and the OTHER side is the fallback's winner:
+    there the fallback still stands, so no baseline expectation moves. With
+    neither side alive the fallback is also kept (nothing better is available).
+]]
+function MatchStateMachine:_DefaultTimeoutWinner()
+	local wardensAlive = self.aliveCounts[self.Constants.Teams.Wardens] or 0
+	local raidersAlive = self.aliveCounts[self.Constants.Teams.Raiders] or 0
+	if wardensAlive > 0 then
+		return self.Constants.Teams.Wardens, self.Enums.RoundEndReason.TimeExpiredNotPlanted
+	elseif raidersAlive > 0 then
+		return self.Constants.Teams.Raiders, self.Enums.RoundEndReason.TeamEliminated
+	end
+	return self.Constants.Teams.Wardens, self.Enums.RoundEndReason.TimeExpiredNotPlanted
+end
+
 function MatchStateMachine:_ResolveRoundTimeout()
 	-- §7.2.4 evaluated
-	local winner = self.Constants.Teams.Wardens
-	local reason = self.Enums.RoundEndReason.TimeExpiredNotPlanted
+	local winner, reason = self:_DefaultTimeoutWinner()
 	if self.timeoutResolver then
-		local result = pcall(self.timeoutResolver, self)
-		if result then
-			if type(result) == "table" and result.winner ~= nil then
-				winner = result.winner
-				reason = result.reason or reason
-			end
+		-- pcall returns (ok, value), NOT the value: reading its FIRST return as
+		-- the resolver's answer meant `type(result) == "table"` was never true,
+		-- so a wired resolver (BEACON, and any test's) was silently ignored and
+		-- the round always fell through to the no-plant default.
+		local ok, result = pcall(self.timeoutResolver, self)
+		if ok and type(result) == "table" and result.winner ~= nil then
+			winner = result.winner
+			reason = result.reason or reason
 		end
 	end
 	self:_ResolveRound(winner, reason)
